@@ -54,6 +54,7 @@ DEFAULT_AUTO_ACCEPT_ON_SILENCE = True       # Default exit rule for sponsor sile
 SIMILARITY_SHINGLE_SIZE = 3
 SIMILARITY_FLAG_THRESHOLD = 0.40  # Jaccard index >= 0.40 flags for review
 
-# Database file
-DB_PATH = "vouch.db"
+import os
 
+# Database file
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vouch.db")
