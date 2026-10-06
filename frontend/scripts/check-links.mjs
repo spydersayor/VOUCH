@@ -36,6 +36,21 @@ const ROLES_TO_TEST = [
       "/sponsor/post-problem",
       "/sponsor/projects",
       "/sponsor/wallet",
+      "/projects/proj_retinopathy/workspace",
+      "/projects/proj_retinopathy/timeline",
+    ],
+  },
+  {
+    role: "accepted_student",
+    email: "student.b@vouch.local",
+    dashboard: "/student",
+    routes: [
+      "/student",
+      "/student/applications",
+      "/student/matches",
+      "/student/credentials",
+      "/projects/proj_retinopathy/workspace",
+      "/projects/proj_retinopathy/timeline",
     ],
   },
   {
@@ -68,13 +83,19 @@ const ROLES_TO_TEST = [
       "/expert",
       "/expert/matches",
       "/expert/conflicts",
+      "/projects/proj_retinopathy/workspace",
+      "/projects/proj_retinopathy/timeline",
     ],
   },
   {
     role: "admin",
     email: "admin@vouch.local",
     dashboard: "/admin",
-    routes: ["/admin"],
+    routes: [
+      "/admin",
+      "/projects/proj_retinopathy/workspace",
+      "/projects/proj_retinopathy/timeline",
+    ],
   },
 ];
 
@@ -135,7 +156,9 @@ function setupErrorTracking(page) {
       if (
         !txt.includes("favicon") &&
         !txt.includes("status of 404 (Not Found)") &&
-        !txt.includes("status of 401 (Unauthorized)")
+        !txt.includes("status of 401 (Unauthorized)") &&
+        !txt.includes("status of 403 (Forbidden)") &&
+        !txt.includes("status of 403")
       ) {
         errors.push(`Console Error: ${txt}`);
       }

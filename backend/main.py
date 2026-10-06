@@ -46,6 +46,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from backend.workspace_router import router as workspace_router
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -53,6 +55,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(workspace_router)
 
 
 # ===================== Pydantic Schemas =====================

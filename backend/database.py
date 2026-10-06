@@ -237,6 +237,85 @@ CREATE TABLE IF NOT EXISTS user_settings (
     portfolio_links_json TEXT DEFAULT '[]',
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS project_files (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    uploader_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    sha256_hash TEXT NOT NULL,
+    watermark_text TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES projects(id),
+    FOREIGN KEY(uploader_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS project_messages (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    sender_name TEXT NOT NULL,
+    sender_role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES projects(id),
+    FOREIGN KEY(sender_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS submissions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    milestone_id TEXT NOT NULL,
+    author_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    file_hash TEXT,
+    ai_used INTEGER NOT NULL DEFAULT 0,
+    ai_share_pct REAL NOT NULL DEFAULT 0.0,
+    ai_declaration TEXT DEFAULT '',
+    integrity_status TEXT DEFAULT 'clean', -- clean, flagged_similarity, flagged_injection
+    similarity_score REAL DEFAULT 0.0,
+    similarity_match_source TEXT DEFAULT '',
+    status TEXT DEFAULT 'submitted', -- submitted, changes_requested, expert_approved, expert_rejected, sponsor_accepted, sponsor_rejected
+    expert_comment TEXT DEFAULT '',
+    expert_reviewed_by TEXT,
+    expert_reviewed_at TIMESTAMP,
+    sponsor_decision_reason TEXT DEFAULT '',
+    sponsor_decided_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES projects(id),
+    FOREIGN KEY(milestone_id) REFERENCES milestones(id),
+    FOREIGN KEY(author_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS ai_agent_actions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    agent_name TEXT NOT NULL,
+    owner_id TEXT NOT NULL,
+    action_type TEXT NOT NULL,
+    action_payload_json TEXT NOT NULL,
+    status TEXT DEFAULT 'pending_approval', -- pending_approval, approved, rejected
+    approved_by TEXT,
+    approved_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES projects(id),
+    FOREIGN KEY(owner_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS project_certificates (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    recipient_id TEXT NOT NULL,
+    recipient_role TEXT NOT NULL,
+    certificate_type TEXT NOT NULL, -- co_authorship, verified_credit, completion_certificate
+    title TEXT NOT NULL,
+    ledger_ref TEXT NOT NULL,
+    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES projects(id),
+    FOREIGN KEY(recipient_id) REFERENCES users(id)
+);
 """
 
 

@@ -37,12 +37,16 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
     { label: "Browse Problems", href: "/open-problems", icon: Search },
     { label: "My Applications", href: "/student/applications", icon: FileCheck },
     { label: "Invitations & Matches", href: "/student/matches", icon: Sparkles, badge: "New" },
+    { label: "Project Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2, badge: "Active" },
+    { label: "Ledger Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
     { label: "Verified Credentials", href: "/student/credentials", icon: Award },
   ];
 
   const expertItems: NavItem[] = [
     { label: "Advisory Console", href: "/expert", icon: LayoutDashboard },
     { label: "Invitations & Matches", href: "/expert/matches", icon: Compass, badge: "Match" },
+    { label: "Review Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2, badge: "Review" },
+    { label: "Ledger Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
     { label: "Conflicts of Interest", href: "/expert/conflicts", icon: AlertTriangle },
   ];
 
@@ -50,11 +54,15 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
     { label: "Sponsor Console", href: "/sponsor", icon: LayoutDashboard },
     { label: "Post a Problem", href: "/sponsor/post-problem", icon: PlusCircle, badge: "AI Scope" },
     { label: "My Initiatives", href: "/sponsor/projects", icon: FolderGit2 },
+    { label: "Active Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2, badge: "Live" },
+    { label: "Audit Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
     { label: "Wallet & Escrow", href: "/sponsor/wallet", icon: Wallet },
   ];
 
   const adminItems: NavItem[] = [
     { label: "Governance Console", href: "/admin", icon: ShieldCheck },
+    { label: "Project Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2 },
+    { label: "Ledger Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
   ];
 
   let items: NavItem[] = [];

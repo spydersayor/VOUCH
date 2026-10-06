@@ -18,6 +18,7 @@ def seed_database():
     with get_db() as conn:
         # Clear existing data cleanly
         tables = [
+            "project_certificates", "ai_agent_actions", "submissions", "project_messages", "project_files",
             "con_replies", "user_settings", "contact_messages", "password_resets",
             "ratings_history", "notifications", "conflicts_of_interest",
             "ledger", "reviews", "payouts", "escrow_lockers", "milestones",
@@ -510,6 +511,104 @@ def seed_database():
         split_config={"non_monetary": True},
         engagement_model="knowledge-sharing",
     )
+
+    with get_db() as conn:
+        # Seed accepted members for proj_retinopathy
+        members_retino = [
+            ("pm_retino_sponsor", proj_retino_id, "usr_sponsor", "sponsor", "accepted", 0.0),
+            ("pm_retino_expert_a", proj_retino_id, "usr_expert_a", "expert", "accepted", 0.0),
+            ("pm_retino_student_b", proj_retino_id, "usr_student_b", "student", "accepted", 0.5),
+        ]
+        for pm in members_retino:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, status, weight)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                pm,
+            )
+
+        # Seed charter acceptances for members (usr_student_a left unaccepted so test_core brief gating works)
+        retino_charter = conn.execute("SELECT id FROM charters WHERE project_id = ? AND is_current = 1", (proj_retino_id,)).fetchone()
+        charter_retino_id = retino_charter["id"] if retino_charter else "charter_proj_retinopathy_v1"
+        for u_id in ["usr_expert_a", "usr_student_b"]:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO charter_acceptances (id, charter_id, project_id, user_id, version, engagement_model_accepted)
+                VALUES (?, ?, ?, ?, 1, 1)
+                """,
+                (f"acc_retino_{u_id}", charter_retino_id, proj_retino_id, u_id),
+            )
+
+        # Seed sample project file
+        sample_code = "import tflite_runtime.interpreter as tflite\n# VOUCH verified edge pipeline\nprint('Model loaded')"
+        import hashlib
+        sample_hash = hashlib.sha256(sample_code.encode("utf-8")).hexdigest()
+        conn.execute(
+            """
+            INSERT INTO project_files (id, project_id, uploader_id, filename, file_size, sha256_hash, watermark_text)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            ("file_retino_1", proj_retino_id, "usr_student_b", "fundus_edge_benchmark.py", len(sample_code), sample_hash, "VOUCH_SECURE_WATERMARK_ROHAN"),
+        )
+        record_ledger_entry(
+            actor="usr_student_b",
+            on_behalf_of=proj_retino_id,
+            action="FILE_UPLOADED",
+            payload={"project_id": proj_retino_id, "filename": "fundus_edge_benchmark.py", "sha256_hash": sample_hash},
+            conn=conn,
+        )
+
+        # Seed sample chat messages
+        conn.execute(
+            """
+            INSERT INTO project_messages (id, project_id, sender_id, sender_name, sender_role, content)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("msg_retino_1", proj_retino_id, "usr_expert_a", "Dr. Aris Thorne (Expert A)", "expert", "Welcome Rohan. Milestone 1 focus is TFLite INT8 quantization baseline."),
+        )
+        conn.execute(
+            """
+            INSERT INTO project_messages (id, project_id, sender_id, sender_name, sender_role, content)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("msg_retino_2", proj_retino_id, "usr_student_b", "Rohan Verma (Student B)", "student", "Uploaded the preprocessing pipeline script. Calibration runs are underway on the edge testbench."),
+        )
+
+        # Seed sample submission for Milestone 1
+        sub_content = "Completed initial image normalization, macular artifact removal, and TFLite baseline pipeline achieving 310ms inference latency."
+        sub_hash = hashlib.sha256(sub_content.encode("utf-8")).hexdigest()
+        conn.execute(
+            """
+            INSERT INTO submissions (
+                id, project_id, milestone_id, author_id, title, content, file_hash,
+                ai_used, ai_share_pct, ai_declaration, integrity_status, similarity_score, status
+            ) VALUES (?, ?, 'ms_retino_1', 'usr_student_b', ?, ?, ?, 1, 15.0, ?, 'clean', 0.05, 'submitted')
+            """,
+            (
+                "sub_retino_m1",
+                proj_retino_id,
+                "TFLite Edge Preprocessing & Baseline Pipeline",
+                sub_content,
+                sub_hash,
+                "Used GitHub Copilot for boilerplate test fixture generation; edge quantization logic written manually.",
+            ),
+        )
+
+        # Seed accepted members for Indic NLP (usr_student_a omitted so student_a can apply in test_core_story)
+        members_nlp = [
+            ("pm_nlp_sponsor", proj_nlp_id, "usr_sponsor", "sponsor", "accepted", 0.0),
+            ("pm_nlp_student_b", proj_nlp_id, "usr_student_b", "student", "accepted", 0.5),
+            ("pm_nlp_expert_a", proj_nlp_id, "usr_expert_a", "expert", "accepted", 0.0),
+        ]
+        for pm in members_nlp:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, status, weight)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                pm,
+            )
 
 
 if __name__ == "__main__":
