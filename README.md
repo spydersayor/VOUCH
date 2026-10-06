@@ -6,43 +6,37 @@
 
 ## Quickstart Commands
 
-Run these exact commands in order from the repository root:
-
-### Windows (PowerShell / Command Prompt)
-```powershell
-# 1. Install dependencies
+### 1. Backend Setup
+```bash
+# Install Python dependencies
 python -m pip install -r requirements.txt
 
-# 2. Seed demo data (users, closed projects, structured reviews, ledger chain)
+# Seed demo data (users, closed projects, structured reviews, and ledger chain)
 python -m backend.seed
 
-# 3. Run automated test suite
+# Run backend tests
 python -m pytest -v
 
-# 4. Start the app (single-command run)
-python run.py
+# Start FastAPI backend (port 8000)
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-### macOS / Linux (Terminal)
+### 2. Modern Next.js Frontend Setup
 ```bash
-# 1. Install dependencies
-python3 -m pip install -r requirements.txt
+# Install frontend dependencies (from frontend directory)
+cd frontend
+npm install
 
-# 2. Seed demo data (users, closed projects, structured reviews, ledger chain)
-python3 -m backend.seed
-
-# 3. Run automated test suite
-python3 -m pytest -v
-
-# 4. Start the app (single-command run)
-python3 run.py
+# Start Next.js App Router (port 3000, proxies /api/* -> 8000)
+npm run dev
 ```
 
 ---
 
-## URL to Open
-Open your web browser and navigate to:
-**[http://localhost:8000](http://localhost:8000)**
+## URLs to Open
+- **Modern Next.js Frontend (Primary):** **[http://localhost:3000](http://localhost:3000)**
+- **FastAPI Backend & Interactive Swagger API Docs:** **[http://localhost:8000/docs](http://localhost:8000/docs)**
+- **Static Vanilla Fallback (Legacy):** **[http://localhost:8000](http://localhost:8000)**
 
 ---
 

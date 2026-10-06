@@ -11,7 +11,7 @@
 
 ## 2. Stack (no build step, one-command run)
 - Backend: Python 3.11, FastAPI, sqlite3, REST JSON under /api, Pydantic.
-- Frontend: static index.html, styles.css, app.js (vanilla JS, hash router). Soft light theme (off-white, navy text, teal and coral accents), large readable fonts, mobile-first responsive.
+- Frontend: Next.js (App Router) + React + TypeScript
 - Real auth: sign-up and login with email and password (PBKDF2 via hashlib), signed session token in an httpOnly cookie, /api/me, logout.
 - Role-based access control enforced SERVER-SIDE on every route (role plus project membership). The frontend only hides things; the backend refuses. Roles: student, expert, sponsor, admin.
 - LLM optional: if env LLM_API_KEY is set use it for scoping and the agent, otherwise deterministic canned outputs.
