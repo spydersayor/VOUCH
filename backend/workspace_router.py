@@ -64,7 +64,7 @@ def check_workspace_access(project_id: str, user: Dict[str, Any], conn) -> Dict[
     others get 403 Forbidden.
     """
     proj = conn.execute(
-        "SELECT id, title, public_summary, confidential_brief, budget, engagement_model, status, sensitivity_label, sponsor_id FROM projects WHERE id = ?",
+        "SELECT id, title, public_summary, confidential_brief, budget, engagement_model, status, sensitivity_label, sponsor_id, final_outcome FROM projects WHERE id = ?",
         (project_id,),
     ).fetchone()
     if not proj:
@@ -200,6 +200,19 @@ async def get_project_workspace(
             (project_id,),
         ).fetchall()
 
+        # Reviews
+        reviews = conn.execute(
+            """
+            SELECT pr.*, u_from.name as reviewer_name, u_to.name as reviewee_name
+            FROM reviews pr
+            JOIN users u_from ON u_from.id = pr.reviewer_id
+            JOIN users u_to ON u_to.id = pr.reviewee_id
+            WHERE pr.project_id = ?
+            ORDER BY pr.created_at DESC
+            """,
+            (project_id,),
+        ).fetchall()
+
         return {
             "project": proj,
             "current_user_role": user["role"],
@@ -213,6 +226,7 @@ async def get_project_workspace(
             "agent_actions": [dict(a) for a in agent_actions],
             "payouts": [dict(p) for p in payouts],
             "certificates": [dict(c) for c in certificates],
+            "reviews": [dict(r) for r in reviews],
         }
 
 

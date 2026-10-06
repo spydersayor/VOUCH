@@ -29,6 +29,13 @@ import {
   Copy,
   Check,
   RefreshCw,
+  Star,
+  LogOut,
+  DollarSign,
+  UserMinus,
+  CheckCircle,
+  Ban,
+  Scale,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,7 +52,7 @@ export default function ProjectWorkspacePage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Active section tab
-  const [activeTab, setActiveTab] = useState<"submissions" | "files" | "chat" | "expert" | "sponsor" | "agent">("submissions");
+  const [activeTab, setActiveTab] = useState<"submissions" | "files" | "chat" | "expert" | "sponsor" | "agent" | "reviews" | "exit">("submissions");
 
   // File upload state
   const [uploadFilename, setUploadFilename] = useState("");
@@ -84,6 +91,37 @@ export default function ProjectWorkspacePage() {
 
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
+  // Phase 6: Project Close, Structured Reviews & Midway Departures
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [closeOutcome, setCloseOutcome] = useState("Successfully completed all project objectives and deliverables.");
+  const [closingProject, setClosingProject] = useState(false);
+
+  const [reviewsData, setReviewsData] = useState<any>(null);
+  const [reviewRevieweeId, setReviewRevieweeId] = useState("");
+  const [reviewScores, setReviewScores] = useState({
+    quality: 5,
+    timeliness: 5,
+    communication: 5,
+    collaboration: 5,
+    integrity: 5,
+    fairness: 5,
+    clarity: 5,
+  });
+  const [structuredReviewComment, setStructuredReviewComment] = useState("");
+  const [reviewTags, setReviewTags] = useState("punctual, high-quality, communicative");
+  const [submittingProjectReview, setSubmittingProjectReview] = useState(false);
+
+  const [showQuitModal, setShowQuitModal] = useState(false);
+  const [quitReason, setQuitReason] = useState("Academic scheduling conflict");
+  const [quitGoodCause, setQuitGoodCause] = useState(false);
+  const [quittingProject, setQuittingProject] = useState(false);
+  const [quitResult, setQuitResult] = useState<any>(null);
+
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawReason, setWithdrawReason] = useState("Corporate strategic reprioritization");
+  const [withdrawingProject, setWithdrawingProject] = useState(false);
+  const [withdrawResult, setWithdrawResult] = useState<any>(null);
+
   const fetchWorkspace = useCallback(async () => {
     if (!projectId) return;
     try {
@@ -106,6 +144,22 @@ export default function ProjectWorkspacePage() {
       }
       if (data.submissions && data.submissions.length > 0) {
         setReviewSubmissionId(data.submissions[0].id);
+      }
+
+      // Fetch reviews & eligibility
+      try {
+        const rev = await apiFetch<any>(`/api/projects/${projectId}/reviews`);
+        setReviewsData(rev);
+        if (rev.review_eligibility && rev.review_eligibility.length > 0) {
+          const unrev = rev.review_eligibility.find((e: any) => !e.already_reviewed);
+          if (unrev) {
+            setReviewRevieweeId(unrev.user_id);
+          } else {
+            setReviewRevieweeId(rev.review_eligibility[0].user_id);
+          }
+        }
+      } catch {
+        // Ignore if reviews endpoint unavailable
       }
     } catch (err: any) {
       setErrorStatus(err.status || 500);
@@ -330,6 +384,108 @@ export default function ProjectWorkspacePage() {
     }
   };
 
+  // Phase 6 Handlers
+  const handleCloseProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setClosingProject(true);
+    try {
+      const res = await apiFetch<any>(`/api/projects/${projectId}/close`, {
+        method: "POST",
+        body: JSON.stringify({ outcome: closeOutcome }),
+      });
+      toast.success(`Project successfully closed! Completion certificates issued to ${res.certificates_issued} members.`);
+      setShowCloseModal(false);
+      setActiveTab("reviews");
+      await fetchWorkspace();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to close project");
+    } finally {
+      setClosingProject(false);
+    }
+  };
+
+  const handleSubmitProjectReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewRevieweeId) {
+      toast.error("Please select a member or company to review");
+      return;
+    }
+    const target = reviewsData?.review_eligibility?.find((c: any) => c.user_id === reviewRevieweeId);
+    const isCompany = target?.role === "sponsor";
+
+    setSubmittingProjectReview(true);
+    try {
+      const payload: any = {
+        reviewee_id: reviewRevieweeId,
+        quality: Number(reviewScores.quality),
+        timeliness: Number(reviewScores.timeliness),
+        communication: Number(reviewScores.communication),
+        collaboration: Number(reviewScores.collaboration),
+        integrity: Number(reviewScores.integrity),
+        comment: structuredReviewComment,
+        tags: reviewTags.split(",").map((t) => t.trim()).filter(Boolean),
+      };
+      if (isCompany) {
+        payload.fairness = Number(reviewScores.fairness);
+        payload.clarity = Number(reviewScores.clarity);
+      }
+      const res = await apiFetch<any>(`/api/projects/${projectId}/reviews`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      toast.success(res.message || "Review submitted and tied to ledger!");
+      setStructuredReviewComment("");
+      await fetchWorkspace();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit review");
+    } finally {
+      setSubmittingProjectReview(false);
+    }
+  };
+
+  const handleCandidateQuit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuittingProject(true);
+    try {
+      const res = await apiFetch<any>(`/api/projects/${projectId}/quit`, {
+        method: "POST",
+        body: JSON.stringify({
+          reason: quitReason,
+          good_cause: currentUser?.role === "admin" ? quitGoodCause : false,
+        }),
+      });
+      setQuitResult(res);
+      toast.warning(
+        res.good_cause
+          ? "Candidate departed project with approved good cause (0 penalty). Rupee table generated."
+          : `Candidate departed midway. Penalty -0.5 stars applied. Rupee table generated.`
+      );
+      await fetchWorkspace();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to process candidate departure");
+    } finally {
+      setQuittingProject(false);
+    }
+  };
+
+  const handleSponsorWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWithdrawingProject(true);
+    try {
+      const res = await apiFetch<any>(`/api/projects/${projectId}/withdraw`, {
+        method: "POST",
+        body: JSON.stringify({ reason: withdrawReason }),
+      });
+      setWithdrawResult(res);
+      toast.warning("Sponsorship withdrawn midway. 100% locked funds + 10% compensation transferred to team.");
+      await fetchWorkspace();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to withdraw sponsorship");
+    } finally {
+      setWithdrawingProject(false);
+    }
+  };
+
   // Server-Side RBAC Guard (403 Forbidden)
   if (errorStatus === 403) {
     return (
@@ -416,6 +572,42 @@ export default function ProjectWorkspacePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {project?.status !== "closed" && (isSponsor || isAdmin) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCloseModal(true)}
+                className="gap-2 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+              >
+                <CheckCircle className="h-4 w-4 text-amber-600" />
+                <span>Close Project &amp; Open Reviews</span>
+              </Button>
+            )}
+
+            {project?.status !== "closed" && currentUser?.role === "student" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowQuitModal(true)}
+                className="gap-2 border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200"
+              >
+                <UserMinus className="h-4 w-4 text-rose-600" />
+                <span>Depart Midway (Quit)</span>
+              </Button>
+            )}
+
+            {project?.status !== "closed" && (isSponsor || isAdmin) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowWithdrawModal(true)}
+                className="gap-2 border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200"
+              >
+                <Ban className="h-4 w-4 text-rose-600" />
+                <span>Withdraw Sponsorship</span>
+              </Button>
+            )}
+
             <Button variant="outline" size="sm" asChild className="gap-2 border-teal-200 hover:border-teal-400 dark:border-teal-900">
               <Link href={`/projects/${projectId}/timeline`}>
                 <ShieldCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" />
@@ -427,8 +619,15 @@ export default function ProjectWorkspacePage() {
 
         {/* Member Roster Strip */}
         <div className="mt-6 border-t border-slate-100 pt-4 dark:border-slate-800">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Accepted Project Team ({members?.length || 0})
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Accepted Project Team ({members?.length || 0})
+            </div>
+            {project?.status === "closed" && (
+              <Badge className="bg-amber-600 text-white font-mono text-[10px]">
+                PROJECT CLOSED: REVIEWS OPEN
+              </Badge>
+            )}
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {members?.map((m: any) => (
@@ -526,6 +725,30 @@ export default function ProjectWorkspacePage() {
         >
           <Bot className="h-4 w-4" />
           <span>AI Assistant</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("reviews")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
+            activeTab === "reviews"
+              ? "border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400"
+              : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          }`}
+        >
+          <Star className="h-4 w-4 text-amber-500" />
+          <span>Peer &amp; Company Reviews ({reviewsData?.reviews?.length || 0})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("exit")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-bold transition-colors whitespace-nowrap ${
+            activeTab === "exit"
+              ? "border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400"
+              : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          }`}
+        >
+          <Scale className="h-4 w-4 text-rose-500" />
+          <span>Midway Exit &amp; Rupee Tables</span>
         </button>
       </div>
 
@@ -1380,6 +1603,826 @@ export default function ProjectWorkspacePage() {
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 7: STRUCTURED REVIEWS & RATINGS */}
+      {activeTab === "reviews" && (
+        <div className="space-y-6">
+          <Card className="border-amber-200 bg-amber-50/30 dark:border-amber-900/50 dark:bg-amber-950/20">
+            <CardHeader>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                    <span>Project Close &amp; Structured Peer Reviews</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Phase 6 Protocol: Only members of a closed project can review; one review per member per project; tied to immutable ledger entry. Repeated high ratings (&ge;4.0) between the same pair are down-weighted by a 50% decay factor.
+                  </CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="border-amber-300 text-amber-800 dark:border-amber-800 dark:text-amber-200">
+                    Floor: 1.0 Star
+                  </Badge>
+                  <Badge variant="outline" className="border-amber-300 text-amber-800 dark:border-amber-800 dark:text-amber-200">
+                    Pair Decay: 0.5x
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Close Project Banner if not closed */}
+          {project?.status !== "closed" ? (
+            <Card className="border-dashed border-amber-300 bg-white p-6 text-center dark:border-amber-900 dark:bg-slate-900">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h3 className="mt-3 text-base font-bold text-slate-900 dark:text-slate-100">
+                Project is Active ({project?.status?.toUpperCase()})
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto">
+                Structured peer reviews unlock automatically once the project is formally closed. Completion certificates will be minted and logged to the ledger.
+              </p>
+              {(isSponsor || isAdmin) && (
+                <div className="mt-4">
+                  <Button
+                    onClick={() => setShowCloseModal(true)}
+                    className="bg-amber-600 text-white hover:bg-amber-700 gap-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Close Project Now</span>
+                  </Button>
+                </div>
+              )}
+            </Card>
+          ) : (
+            /* Review Submission Form if closed */
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <Card className="border-slate-200 dark:border-slate-800">
+                <CardHeader>
+                  <CardTitle className="text-base font-bold">Submit Structured Review</CardTitle>
+                  <CardDescription className="text-xs">
+                    Evaluate contribution across standardized dimensions. Rated 1 to 5.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmitProjectReview} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Select Member or Company to Review *
+                      </label>
+                      <select
+                        value={reviewRevieweeId}
+                        onChange={(e) => setReviewRevieweeId(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                        required
+                      >
+                        {reviewsData?.review_eligibility?.map((c: any) => (
+                          <option key={c.user_id} value={c.user_id}>
+                            {c.name} ({c.role.toUpperCase()}) {c.already_reviewed ? "— [Already Reviewed]" : "— [Eligible]"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Standard 5 Criteria */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span>Quality (1-5)</span>
+                          <span className="text-amber-600 font-bold">{reviewScores.quality} / 5</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={reviewScores.quality}
+                          onChange={(e) => setReviewScores({ ...reviewScores, quality: Number(e.target.value) })}
+                          className="w-full accent-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span>Timeliness (1-5)</span>
+                          <span className="text-amber-600 font-bold">{reviewScores.timeliness} / 5</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={reviewScores.timeliness}
+                          onChange={(e) => setReviewScores({ ...reviewScores, timeliness: Number(e.target.value) })}
+                          className="w-full accent-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span>Communication (1-5)</span>
+                          <span className="text-amber-600 font-bold">{reviewScores.communication} / 5</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={reviewScores.communication}
+                          onChange={(e) => setReviewScores({ ...reviewScores, communication: Number(e.target.value) })}
+                          className="w-full accent-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span>Collaboration (1-5)</span>
+                          <span className="text-amber-600 font-bold">{reviewScores.collaboration} / 5</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={reviewScores.collaboration}
+                          onChange={(e) => setReviewScores({ ...reviewScores, collaboration: Number(e.target.value) })}
+                          className="w-full accent-amber-500"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span>Integrity (1-5)</span>
+                          <span className="text-amber-600 font-bold">{reviewScores.integrity} / 5</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={reviewScores.integrity}
+                          onChange={(e) => setReviewScores({ ...reviewScores, integrity: Number(e.target.value) })}
+                          className="w-full accent-amber-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Company Specific Criteria (Fairness & Clarity) */}
+                    {reviewsData?.review_eligibility?.find((c: any) => c.user_id === reviewRevieweeId)?.role === "sponsor" && (
+                      <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 space-y-3 dark:border-indigo-900/50 dark:bg-indigo-950/20">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                          Company Review Dimensions (SPEC Phase 6.1)
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div>
+                            <div className="flex justify-between text-xs font-semibold mb-1">
+                              <span>Fairness of Scope &amp; Evaluation (1-5)</span>
+                              <span className="text-indigo-600 font-bold">{reviewScores.fairness} / 5</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="1"
+                              max="5"
+                              step="1"
+                              value={reviewScores.fairness}
+                              onChange={(e) => setReviewScores({ ...reviewScores, fairness: Number(e.target.value) })}
+                              className="w-full accent-indigo-500"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-xs font-semibold mb-1">
+                              <span>Clarity of Problem Brief (1-5)</span>
+                              <span className="text-indigo-600 font-bold">{reviewScores.clarity} / 5</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="1"
+                              max="5"
+                              step="1"
+                              value={reviewScores.clarity}
+                              onChange={(e) => setReviewScores({ ...reviewScores, clarity: Number(e.target.value) })}
+                              className="w-full accent-indigo-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Optional Verified Tags (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={reviewTags}
+                        onChange={(e) => setReviewTags(e.target.value)}
+                        placeholder="punctual, dependable, clear communicator, edge ml expert"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Written Feedback / Detailed Comment
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={structuredReviewComment}
+                        onChange={(e) => setStructuredReviewComment(e.target.value)}
+                        placeholder="Provide candid and constructive feedback on technical accuracy, responsiveness and team dynamics..."
+                        className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={submittingProjectReview}
+                      className="w-full bg-amber-600 text-white hover:bg-amber-700 gap-2"
+                    >
+                      <Star className="h-4 w-4" />
+                      <span>{submittingProjectReview ? "Recording Review..." : "Submit Review & Anchor to Ledger"}</span>
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Completed Reviews List */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+                  Logged Project Reviews ({reviewsData?.reviews?.length || 0})
+                </h3>
+
+                {(!reviewsData?.reviews || reviewsData.reviews.length === 0) ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-xs text-slate-500 dark:border-slate-800">
+                    No reviews logged yet. Be the first project member to review a colleague or sponsor!
+                  </div>
+                ) : (
+                  reviewsData.reviews.map((r: any) => {
+                    const avg = ((r.quality + r.timeliness + r.communication + r.collaboration + r.integrity) / 5).toFixed(1);
+                    const tags = r.tags_json ? JSON.parse(r.tags_json) : [];
+                    return (
+                      <div
+                        key={r.id}
+                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3 dark:border-slate-800 dark:bg-slate-900"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700 font-bold text-xs dark:bg-amber-900/60 dark:text-amber-300">
+                              {r.reviewer_name ? r.reviewer_name[0] : "R"}
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                                {r.reviewer_name} <span className="font-normal text-slate-500">&rarr;</span> {r.reviewee_name}
+                              </div>
+                              <div className="text-[10px] text-slate-400">
+                                {r.reviewer_role?.toUpperCase()} reviewing {r.reviewee_role?.toUpperCase()}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-amber-500 text-white font-mono text-xs flex items-center gap-1">
+                              <Star className="h-3 w-3 fill-white" />
+                              <span>{avg} / 5.0</span>
+                            </Badge>
+                            {r.ledger_ref && (
+                              <Badge variant="outline" className="font-mono text-[9px] text-teal-600 border-teal-300">
+                                #{r.ledger_ref}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Scores Pills */}
+                        <div className="flex flex-wrap gap-1.5 text-[10px]">
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            Quality: <strong>{r.quality}</strong>
+                          </span>
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            Timeliness: <strong>{r.timeliness}</strong>
+                          </span>
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            Comm: <strong>{r.communication}</strong>
+                          </span>
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            Collab: <strong>{r.collaboration}</strong>
+                          </span>
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            Integrity: <strong>{r.integrity}</strong>
+                          </span>
+                          {r.fairness && (
+                            <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                              Fairness: <strong>{r.fairness}</strong>
+                            </span>
+                          )}
+                          {r.clarity && (
+                            <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                              Clarity: <strong>{r.clarity}</strong>
+                            </span>
+                          )}
+                        </div>
+
+                        {r.comment && (
+                          <p className="text-xs text-slate-600 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl">
+                            &ldquo;{r.comment}&rdquo;
+                          </p>
+                        )}
+
+                        {tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {tags.map((t: string, i: number) => (
+                              <span
+                                key={i}
+                                className="rounded-full bg-teal-50 px-2 py-0.5 text-[9px] font-semibold text-teal-700 dark:bg-teal-950 dark:text-teal-300"
+                              >
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 8: MIDWAY EXIT & RUPEE CONSERVATION TABLES */}
+      {activeTab === "exit" && (
+        <div className="space-y-6">
+          <Card className="border-rose-200 bg-rose-50/30 dark:border-rose-900/50 dark:bg-rose-950/20">
+            <CardHeader>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Scale className="h-5 w-5 text-rose-600" />
+                    <span>Midway Exit &amp; Strict Rupee Conservation Tables</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    SPEC Phase 6.3 &amp; 6.4: Zero leakage, zero newly minted rupees. Every rupee either earned pro-rata, retained, returned to pool, or charged as compensation.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Section A: Candidate Quits Midway */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-bold flex items-center gap-2">
+                      <UserMinus className="h-4 w-4 text-rose-500" />
+                      <span>Candidate Midway Departure</span>
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Paid only for accepted or reviewed work (pro-rata share). Already released funds stay theirs. -0.5 stars unless good cause. Access revoked, unearned balance returns to pool.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowQuitModal(true)}
+                    className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300"
+                  >
+                    Depart Midway
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs space-y-1.5 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="font-bold text-slate-700 dark:text-slate-300">Exit Protocol Rules:</div>
+                  <ul className="list-disc pl-4 text-slate-600 dark:text-slate-400 space-y-1 text-[11px]">
+                    <li>Candidate receives pro-rata rupee share of the in-progress milestone based on approved deliverables.</li>
+                    <li>Unearned portion returns cleanly to the project pool / escrow locker.</li>
+                    <li>Already released funds from previous milestones remain permanently with candidate.</li>
+                    <li>Star rating penalty: <strong>-0.5 stars</strong> recorded with reason in ledger (waived if marked Good Cause).</li>
+                    <li>Verified credentials for past accepted work are preserved; workspace access is revoked.</li>
+                  </ul>
+                </div>
+
+                {/* Candidate Rupee Table */}
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    {quitResult ? "Live Execution Rupee Table:" : "Preview Rupee Conservation Table:"}
+                  </div>
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 dark:bg-slate-800">
+                        <tr>
+                          <th className="p-2.5">Component</th>
+                          <th className="p-2.5">Calculation Basis</th>
+                          <th className="p-2.5 text-right">Rupee Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                        <tr>
+                          <td className="p-2.5 font-sans font-semibold">Active Milestone Budget</td>
+                          <td className="p-2.5 text-[11px] text-slate-500">In-progress milestone</td>
+                          <td className="p-2.5 text-right font-bold">₹{quitResult?.rupee_table?.milestone_budget?.toLocaleString() || "50,000"}</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2.5 font-sans font-semibold">Candidate Milestone Max Share</td>
+                          <td className="p-2.5 text-[11px] text-slate-500">{((quitResult?.rupee_table?.candidate_contribution_weight || 0.4) * 100).toFixed(0)}% contribution weight</td>
+                          <td className="p-2.5 text-right font-bold text-indigo-600">₹{quitResult?.rupee_table?.candidate_milestone_max_share?.toLocaleString() || "20,000"}</td>
+                        </tr>
+                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <td className="p-2.5 font-sans font-semibold text-emerald-800 dark:text-emerald-300">
+                            Pro-Rata Earned (Paid to Candidate)
+                          </td>
+                          <td className="p-2.5 text-[11px] text-slate-500">
+                            {quitResult?.rupee_table?.reviewed_work_percentage ?? 100}% reviewed work
+                          </td>
+                          <td className="p-2.5 text-right font-bold text-emerald-700 dark:text-emerald-400">
+                            +₹{quitResult?.rupee_table?.pro_rata_earned?.toLocaleString() || "20,000"}
+                          </td>
+                        </tr>
+                        <tr className="bg-blue-50/50 dark:bg-blue-950/20">
+                          <td className="p-2.5 font-sans font-semibold text-blue-800 dark:text-blue-300">
+                            Unearned Returned to Project Pool
+                          </td>
+                          <td className="p-2.5 text-[11px] text-slate-500">Returned to escrow locker</td>
+                          <td className="p-2.5 text-right font-bold text-blue-700 dark:text-blue-400">
+                            ₹{quitResult?.rupee_table?.unearned_returned_to_pool?.toLocaleString() || "0"}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2.5 font-sans font-semibold">Previously Released Funds</td>
+                          <td className="p-2.5 text-[11px] text-slate-500">Already paid from completed milestones</td>
+                          <td className="p-2.5 text-right font-bold">₹{quitResult?.rupee_table?.past_released_funds?.toLocaleString() || "0"}</td>
+                        </tr>
+                        <tr className="border-t-2 border-slate-300 bg-slate-100 font-bold dark:border-slate-700 dark:bg-slate-800">
+                          <td className="p-2.5 font-sans">Total Candidate Payout Received</td>
+                          <td className="p-2.5 text-[11px] text-emerald-600">Integer Rupee Conserved</td>
+                          <td className="p-2.5 text-right text-emerald-700 dark:text-emerald-300">
+                            ₹{quitResult?.rupee_table?.total_candidate_payout?.toLocaleString() || "20,000"}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {quitResult && (
+                    <div className="mt-3 rounded-xl bg-slate-100 p-2.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300 space-y-1">
+                      <div className="flex justify-between">
+                        <span>Ledger Sequence:</span>
+                        <strong className="font-mono text-teal-600">#{quitResult.ledger_seq}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Star Rating Penalty:</span>
+                        <strong className="text-rose-600">{quitResult.penalty_applied} stars</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>New Star Rating:</span>
+                        <strong className="font-mono">{quitResult.new_stars} &starf;</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section B: Sponsor Withdraws Midway */}
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-bold flex items-center gap-2">
+                      <Ban className="h-4 w-4 text-rose-500" />
+                      <span>Sponsor Midway Withdrawal</span>
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      100% locked unreleased funds go to team by charter split. PLUS 10% compensation charged to sponsor wallet. Sponsor -0.5 stars, withdrawal on company record.
+                    </CardDescription>
+                  </div>
+                  {(isSponsor || isAdmin) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowWithdrawModal(true)}
+                      className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300"
+                    >
+                      Withdraw Sponsorship
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs space-y-1.5 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="font-bold text-slate-700 dark:text-slate-300">Withdrawal Protocol Rules:</div>
+                  <ul className="list-disc pl-4 text-slate-600 dark:text-slate-400 space-y-1 text-[11px]">
+                    <li>All locked and unreleased escrow funds immediately transfer to team per charter split.</li>
+                    <li>Sponsor wallet is charged an additional <strong>10% compensation penalty</strong>, also split to the team.</li>
+                    <li>Sponsor rating reduced by <strong>-0.5 stars</strong> (reason recorded to ledger).</li>
+                    <li>Withdrawal count is permanently incremented on company public record.</li>
+                    <li>Team members keep all credit, credentials, and IP protections.</li>
+                  </ul>
+                </div>
+
+                {/* Sponsor Rupee Table */}
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    {withdrawResult ? "Live Execution Rupee Table:" : "Preview Rupee Conservation Table:"}
+                  </div>
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 dark:bg-slate-800">
+                        <tr>
+                          <th className="p-2.5">Component</th>
+                          <th className="p-2.5">Formula / Status</th>
+                          <th className="p-2.5 text-right">Rupee Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                        <tr>
+                          <td className="p-2.5 font-sans font-semibold">Locked Unreleased Escrow</td>
+                          <td className="p-2.5 text-[11px] text-slate-500">100% directed to team</td>
+                          <td className="p-2.5 text-right font-bold">₹{withdrawResult?.rupee_table?.locked_unreleased_funds?.toLocaleString() || "1,00,000"}</td>
+                        </tr>
+                        <tr className="bg-rose-50/50 dark:bg-rose-950/20">
+                          <td className="p-2.5 font-sans font-semibold text-rose-800 dark:text-rose-300">
+                            +10% Compensation Penalty
+                          </td>
+                          <td className="p-2.5 text-[11px] text-slate-500">Charged to sponsor wallet</td>
+                          <td className="p-2.5 text-right font-bold text-rose-700 dark:text-rose-400">
+                            +₹{withdrawResult?.rupee_table?.compensation_amount?.toLocaleString() || "10,000"}
+                          </td>
+                        </tr>
+                        <tr className="bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <td className="p-2.5 font-sans font-semibold text-emerald-800 dark:text-emerald-300">
+                            Total Compensation Pool for Team
+                          </td>
+                          <td className="p-2.5 text-[11px] text-slate-500">Escrow + 10% penalty</td>
+                          <td className="p-2.5 text-right font-bold text-emerald-700 dark:text-emerald-400">
+                            ₹{withdrawResult?.rupee_table?.total_pool_for_team?.toLocaleString() || "1,10,000"}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2.5 font-sans font-semibold">Sponsor Wallet Deduction</td>
+                          <td className="p-2.5 text-[11px] text-slate-500">
+                            Before: ₹{withdrawResult?.rupee_table?.sponsor_wallet_before?.toLocaleString() || "1,50,000"} &rarr; After: ₹{withdrawResult?.rupee_table?.sponsor_wallet_after?.toLocaleString() || "1,40,000"}
+                          </td>
+                          <td className="p-2.5 text-right font-bold text-rose-600">
+                            -₹{withdrawResult?.rupee_table?.sponsor_charged?.toLocaleString() || "10,000"}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Team Distributions Breakdown */}
+                  {withdrawResult?.rupee_table?.team_distributions && (
+                    <div className="mt-3">
+                      <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Team Distribution Breakdown:
+                      </div>
+                      <div className="space-y-1">
+                        {withdrawResult.rupee_table.team_distributions.map((dist: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between text-[11px] rounded-lg bg-slate-50 px-2.5 py-1.5 dark:bg-slate-800/80 font-mono"
+                          >
+                            <span className="font-sans">
+                              {dist.recipient_name} ({dist.role}) — {((dist.weight || 0) * 100).toFixed(0)}%
+                            </span>
+                            <strong className="text-emerald-600 dark:text-emerald-400">
+                              +₹{dist.share_of_pool.toLocaleString()}
+                            </strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {withdrawResult && (
+                    <div className="mt-3 rounded-xl bg-slate-100 p-2.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300 space-y-1">
+                      <div className="flex justify-between">
+                        <span>Ledger Sequence:</span>
+                        <strong className="font-mono text-teal-600">#{withdrawResult.ledger_seq}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Sponsor Penalty:</span>
+                        <strong className="text-rose-600">{withdrawResult.penalty_applied} stars</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Company Withdrawals Record:</span>
+                        <strong className="font-mono">{withdrawResult.withdrawal_count} withdrawals</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* CLOSE PROJECT MODAL */}
+      {showCloseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/60 dark:text-amber-300">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Close Project &amp; Issue Certificates
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Phase 6.1: Conclude work and unlock structured peer reviews.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCloseProject} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Final Project Outcome Statement *
+                </label>
+                <textarea
+                  rows={3}
+                  value={closeOutcome}
+                  onChange={(e) => setCloseOutcome(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400 space-y-1">
+                <div>&bull; Project status will transition to <strong>closed</strong>.</div>
+                <div>&bull; Immutable completion certificates will be issued to all accepted members.</div>
+                <div>&bull; Structured reviews will open immediately.</div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCloseModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={closingProject}
+                  size="sm"
+                  className="bg-amber-600 text-white hover:bg-amber-700"
+                >
+                  {closingProject ? "Closing..." : "Confirm Project Close"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CANDIDATE QUIT MODAL */}
+      {showQuitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-300">
+                <UserMinus className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Confirm Candidate Midway Departure
+                </h3>
+                <p className="text-xs text-slate-500">
+                  SPEC Phase 6.3: Pro-rata payout, credit retained, workspace revoked.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCandidateQuit} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Reason for Departure *
+                </label>
+                <textarea
+                  rows={2}
+                  value={quitReason}
+                  onChange={(e) => setQuitReason(e.target.value)}
+                  placeholder="e.g. Academic conflict, urgent medical leave, personal circumstance"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              {currentUser?.role === "admin" && (
+                <div className="flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-900 dark:bg-teal-950/20">
+                  <input
+                    type="checkbox"
+                    id="quit-good-cause"
+                    checked={quitGoodCause}
+                    onChange={(e) => setQuitGoodCause(e.target.checked)}
+                    className="h-4 w-4 rounded accent-teal-600"
+                  />
+                  <label htmlFor="quit-good-cause" className="text-xs font-medium text-teal-900 dark:text-teal-200">
+                    Admin Approval: Mark &ldquo;Good Cause&rdquo; (Waives the -0.5 star rating penalty)
+                  </label>
+                </div>
+              )}
+
+              <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 space-y-1">
+                <div>&bull; You will be paid pro-rata for accepted/reviewed deliverables in the current milestone.</div>
+                <div>&bull; Previously released payouts stay yours. Unearned milestone balance returns to pool.</div>
+                <div>&bull; Penalty of <strong>-0.5 stars</strong> applied unless Good Cause approved.</div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowQuitModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={quittingProject}
+                  size="sm"
+                  className="bg-rose-600 text-white hover:bg-rose-700"
+                >
+                  {quittingProject ? "Departing..." : "Confirm Departure"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SPONSOR WITHDRAW MODAL */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-300">
+                <Ban className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Withdraw Sponsorship Midway
+                </h3>
+                <p className="text-xs text-slate-500">
+                  SPEC Phase 6.4: Escrow release + 10% penalty charged to sponsor wallet.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSponsorWithdraw} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Reason for Sponsorship Withdrawal *
+                </label>
+                <textarea
+                  rows={2}
+                  value={withdrawReason}
+                  onChange={(e) => setWithdrawReason(e.target.value)}
+                  placeholder="e.g. Corporate strategic reprioritization, budget realignment"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 space-y-1">
+                <div>&bull; 100% of all locked unreleased escrow immediately transfers to the team.</div>
+                <div>&bull; A <strong>10% compensation penalty</strong> is charged to your sponsor wallet and distributed to the team.</div>
+                <div>&bull; Sponsor rating receives a <strong>-0.5 star penalty</strong> recorded in the ledger.</div>
+                <div>&bull; Withdrawal count will be permanently logged on the company public record.</div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowWithdrawModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={withdrawingProject}
+                  size="sm"
+                  className="bg-rose-600 text-white hover:bg-rose-700"
+                >
+                  {withdrawingProject ? "Withdrawing..." : "Confirm Sponsorship Withdrawal"}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

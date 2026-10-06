@@ -36,6 +36,8 @@ const ROLES_TO_TEST = [
       "/sponsor/post-problem",
       "/sponsor/projects",
       "/sponsor/wallet",
+      "/profile",
+      "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
     ],
@@ -49,6 +51,8 @@ const ROLES_TO_TEST = [
       "/student/applications",
       "/student/matches",
       "/student/credentials",
+      "/profile",
+      "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
     ],
@@ -62,6 +66,8 @@ const ROLES_TO_TEST = [
       "/student/applications",
       "/student/matches",
       "/student/credentials",
+      "/profile",
+      "/settings",
     ],
   },
   {
@@ -73,6 +79,8 @@ const ROLES_TO_TEST = [
       "/student/applications",
       "/student/matches",
       "/student/credentials",
+      "/profile",
+      "/settings",
     ],
   },
   {
@@ -83,6 +91,8 @@ const ROLES_TO_TEST = [
       "/expert",
       "/expert/matches",
       "/expert/conflicts",
+      "/profile",
+      "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
     ],
@@ -93,6 +103,8 @@ const ROLES_TO_TEST = [
     dashboard: "/admin",
     routes: [
       "/admin",
+      "/profile",
+      "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
     ],
@@ -152,13 +164,15 @@ function setupErrorTracking(page) {
   page.on("console", (msg) => {
     if (msg.type() === "error") {
       const txt = msg.text();
-      // Ignore non-fatal React favicon, font warnings, or expected 401 on /api/me for anonymous visits
+      // Ignore non-fatal React favicon, font warnings, Next.js HMR dev sockets, or expected 401/403 on /api/me for anonymous visits
       if (
         !txt.includes("favicon") &&
         !txt.includes("status of 404 (Not Found)") &&
         !txt.includes("status of 401 (Unauthorized)") &&
         !txt.includes("status of 403 (Forbidden)") &&
-        !txt.includes("status of 403")
+        !txt.includes("status of 403") &&
+        !txt.includes("_next/hmr") &&
+        !txt.includes("WebSocket connection")
       ) {
         errors.push(`Console Error: ${txt}`);
       }
