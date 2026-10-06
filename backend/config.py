@@ -29,6 +29,8 @@ RATING_MAX = 5.0
 STAR_PENALTY_QUIT = 0.5
 STAR_PENALTY_WITHDRAW = 0.5
 NEWBIE_EXPLORATION_BOOST = 0.05
+REPEAT_HIGH_RATING_THRESHOLD = 4.0
+REPEAT_PAIR_DECAY = 0.5  # downweight factor for repeated high ratings between the same pair
 
 # Matchmaking Weights (SPEC.md Section 7)
 MATCH_WEIGHT_SKILL = 0.50

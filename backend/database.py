@@ -196,6 +196,19 @@ CREATE TABLE IF NOT EXISTS ratings_history (
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS star_penalties (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    project_id TEXT,
+    penalty_type TEXT NOT NULL, -- quit, withdraw, admin_adjustment
+    penalty_value REAL NOT NULL, -- e.g. -0.5
+    reason TEXT NOT NULL,
+    good_cause INTEGER DEFAULT 0,
+    ledger_seq INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS password_resets (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,

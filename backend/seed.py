@@ -20,7 +20,7 @@ def seed_database():
         tables = [
             "project_certificates", "ai_agent_actions", "submissions", "project_messages", "project_files",
             "con_replies", "user_settings", "contact_messages", "password_resets",
-            "ratings_history", "notifications", "conflicts_of_interest",
+            "star_penalties", "ratings_history", "notifications", "conflicts_of_interest",
             "ledger", "reviews", "payouts", "escrow_lockers", "milestones",
             "project_members", "charter_acceptances", "charters", "projects",
             "wallets", "users"
@@ -379,19 +379,69 @@ def seed_database():
 
         for idx, rev in enumerate(all_reviews):
             rev_id = f"rev_{idx+1}"
+            ledger_ref = f"ledger_{rev_id}"
             conn.execute(
                 """
                 INSERT INTO reviews (
                     id, reviewer_id, reviewee_id, project_id, quality, timeliness,
-                    communication, collaboration, integrity, fairness, clarity, comment
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    communication, collaboration, integrity, fairness, clarity, comment, ledger_ref
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (rev_id, rev[0], rev[1], rev[2], rev[3], rev[4], rev[5], rev[6], rev[7], rev[8], rev[9], rev[10]),
+                (rev_id, rev[0], rev[1], rev[2], rev[3], rev[4], rev[5], rev[6], rev[7], rev[8], rev[9], rev[10], ledger_ref),
             )
             record_ledger_entry(
                 actor=rev[0],
                 action="REVIEW_SUBMITTED",
                 payload={"review_id": rev_id, "reviewee_id": rev[1], "project_id": rev[2]},
+                conn=conn,
+            )
+
+        # Initial ratings history for users with established ratings
+        initial_ratings = [
+            ("usr_student_a", None, 4.6, 4.6, "Initial platform rating established from 2 closed project peer reviews"),
+            ("usr_student_b", None, 3.9, 3.9, "Initial platform rating established across 2 projects with similarity audit adjustment"),
+            ("usr_expert_a", None, 4.9, 4.9, "Consistently high 5.0 peer ratings across biomedical mentoring engagements"),
+            ("usr_sponsor", None, 4.7, 4.7, "Consistent prompt escrow releases and clear acceptance criteria"),
+        ]
+        for user_id, old_r, new_r, delta, reason in initial_ratings:
+            entry = record_ledger_entry(
+                actor=user_id,
+                on_behalf_of=user_id,
+                action="STAR_RATING_UPDATED",
+                payload={"user_id": user_id, "old_rating": old_r, "new_rating": new_r, "delta": delta, "reason": reason},
+                conn=conn,
+            )
+            conn.execute(
+                """
+                INSERT INTO ratings_history (id, user_id, old_rating, new_rating, delta, reason, ledger_seq)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (f"rh_init_{user_id}", user_id, old_r, new_r, delta, reason, entry["seq"]),
+            )
+
+        # Seed verifiable credentials & certificates for closed past projects (SPEC.md Section 8 & 11)
+        initial_certs = [
+            ("cert_sa_1", "proj_past_1", "usr_student_a", "student", "verified_credit", "Verified Milestone Credit: Edge Quantization Pipeline", "ledger_cert_sa_1"),
+            ("cert_sa_2", "proj_past_1", "usr_student_a", "student", "completion_certificate", "Project Completion Certificate: On-Device Skin Lesion Classifier", "ledger_cert_sa_2"),
+            ("cert_sa_3", "proj_past_2", "usr_student_a", "student", "verified_credit", "Verified Milestone Credit: DSP Preprocessing Engine", "ledger_cert_sa_3"),
+            ("cert_ea_1", "proj_past_1", "usr_expert_a", "expert", "co_authorship", "Co-Authorship & Advisory Verification: On-Device Skin Lesion Classifier", "ledger_cert_ea_1"),
+            ("cert_ea_2", "proj_past_2", "usr_expert_a", "expert", "co_authorship", "Co-Authorship & Advisory Verification: Cardio Acoustic Pulse Analyzer", "ledger_cert_ea_2"),
+            ("cert_sb_1", "proj_past_2", "usr_student_b", "student", "verified_credit", "Verified Milestone Credit: Model Normalization Pipeline", "ledger_cert_sb_1"),
+            ("cert_sb_2", "proj_past_3", "usr_student_b", "student", "verified_credit", "Verified Milestone Credit: Synthetic EEG Generator", "ledger_cert_sb_2"),
+        ]
+        for c in initial_certs:
+            conn.execute(
+                """
+                INSERT INTO project_certificates (id, project_id, recipient_id, recipient_role, certificate_type, title, ledger_ref)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                c,
+            )
+            record_ledger_entry(
+                actor="system",
+                on_behalf_of=c[1],
+                action="CREDENTIAL_ISSUED",
+                payload={"cert_id": c[0], "project_id": c[1], "recipient_id": c[2], "title": c[5]},
                 conn=conn,
             )
 

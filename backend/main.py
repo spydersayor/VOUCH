@@ -29,7 +29,9 @@ from backend.charter import publish_or_update_charter, accept_charter
 from backend.payout import calculate_milestone_payout
 from backend.ai_scoping import scope_problem
 from backend.matchmaking import get_project_candidate_matches
-from backend.pros_cons import compute_user_pros_and_cons, compute_company_pros_and_cons
+from backend.pros_cons import compute_user_pros_and_cons, compute_company_pros_and_cons, compute_company_record
+from backend.stars import calculate_user_stars, calculate_and_update_stars, record_star_penalty
+from backend.project_lifecycle import close_project, submit_project_review, candidate_quit_project, sponsor_withdraw_project
 import uuid
 
 from contextlib import asynccontextmanager
@@ -97,6 +99,33 @@ class PayoutCalcRequest(BaseModel):
 
 class SimulateTamperRequest(BaseModel):
     seq: Optional[int] = None
+
+
+class ProjectCloseRequest(BaseModel):
+    outcome: Optional[str] = None
+
+
+class ReviewSubmitRequest(BaseModel):
+    reviewee_id: str
+    quality: float = Field(..., ge=1.0, le=5.0)
+    timeliness: float = Field(..., ge=1.0, le=5.0)
+    communication: float = Field(..., ge=1.0, le=5.0)
+    collaboration: float = Field(..., ge=1.0, le=5.0)
+    integrity: float = Field(..., ge=1.0, le=5.0)
+    fairness: Optional[float] = Field(None, ge=1.0, le=5.0)
+    clarity: Optional[float] = Field(None, ge=1.0, le=5.0)
+    comment: Optional[str] = ""
+    tags: Optional[List[str]] = []
+
+
+class CandidateQuitRequest(BaseModel):
+    reason: Optional[str] = "Departed project midway"
+    good_cause: Optional[bool] = False
+
+
+class SponsorWithdrawRequest(BaseModel):
+    project_id: Optional[str] = None
+    reason: Optional[str] = "Withdrew project sponsorship midway"
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -578,43 +607,28 @@ async def get_public_profile(
             (user_id,),
         ).fetchall()
 
-        # Pros and Cons summary
-        pros = []
-        cons = []
-        if revs:
-            avg_q = sum(r["quality"] for r in revs) / len(revs)
-            avg_t = sum(r["timeliness"] for r in revs) / len(revs)
-            avg_c = sum(r["communication"] for r in revs) / len(revs)
-            avg_i = sum(r["integrity"] for r in revs) / len(revs)
-
-            if avg_q >= 4.2:
-                pros.append(f"Strong quality track record (avg {round(avg_q, 1)}/5)")
-            elif avg_q <= 3.3:
-                cons.append(f"Quality feedback mixed on past milestones (avg {round(avg_q, 1)}/5)")
-
-            if avg_t >= 4.2:
-                pros.append(f"Highly reliable delivery timeliness (avg {round(avg_t, 1)}/5)")
-            elif avg_t <= 3.3:
-                cons.append(f"One or more milestones had schedule slips (avg {round(avg_t, 1)}/5)")
-
-            if avg_c >= 4.2:
-                pros.append(f"Clear, transparent communication (avg {round(avg_c, 1)}/5)")
-            if avg_i >= 4.5:
-                pros.append("Flawless integrity rating with zero verified similarity flags")
-            elif avg_i <= 3.5:
-                cons.append("Flagged for similarity audit during past submission (subsequently cleared)")
-
-        # Company record for sponsors
-        company_record = None
+        # Real Pros & Cons calculation engine (SPEC.md Section 7)
         if u["role"] == "sponsor":
-            company_record = {
-                "stars": u["stars"] or 4.7,
-                "on_time_payment_rate": "100%",
-                "dispute_count": 0,
-                "withdrawals": 0,
-                "past_contributor_benefit_score": "4.9 / 5.0",
-                "escrow_guaranteed": True,
-            }
+            pc_data = compute_company_pros_and_cons(user_id, conn)
+            company_record = compute_company_record(user_id, conn)
+        else:
+            pc_data = compute_user_pros_and_cons(user_id, u["role"], conn)
+            company_record = None
+
+        pros = [p["text"] for p in pc_data.get("pros", [])]
+        cons = [c["text"] for c in pc_data.get("cons", [])]
+
+        # Fetch verifiable credentials / certificates (SPEC.md Section 8 & Phase 6)
+        certs = conn.execute(
+            """
+            SELECT c.*, p.title as project_title
+            FROM project_certificates c
+            JOIN projects p ON p.id = c.project_id
+            WHERE c.recipient_id = ?
+            ORDER BY c.issued_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
 
         profile_data = {
             "id": u["id"],
@@ -630,6 +644,8 @@ async def get_public_profile(
             "reviews_count": len(revs),
             "pros": pros,
             "cons": cons,
+            "pros_cons_data": pc_data,
+            "certificates": [dict(c) for c in certs],
             "company_record": company_record,
             "rating_timeline": [dict(h) for h in history],
         }
@@ -644,6 +660,52 @@ async def get_public_profile(
             profile_data["is_owner"] = False
 
         return profile_data
+
+
+@app.get("/api/users/{user_id}/rating-history")
+async def get_user_rating_history(user_id: str):
+    """
+    Returns rating history timeline with reasons, deltas, and cryptographic ledger seq.
+    Powers 'Why did my rating change?'.
+    """
+    with get_db() as conn:
+        u = conn.execute("SELECT id, name, stars, newbie_badge, role FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not u:
+            raise HTTPException(status_code=404, detail="User not found")
+        history = conn.execute(
+            """
+            SELECT rh.*, l.entry_hash
+            FROM ratings_history rh
+            LEFT JOIN ledger l ON l.seq = rh.ledger_seq
+            WHERE rh.user_id = ?
+            ORDER BY rh.created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+        return {
+            "user_id": user_id,
+            "name": u["name"],
+            "stars": u["stars"],
+            "newbie_badge": bool(u["newbie_badge"]),
+            "timeline": [dict(h) for h in history],
+        }
+
+
+@app.get("/api/users/{user_id}/certificates")
+async def get_user_certificates(user_id: str):
+    """Returns all cryptographically issued certificates and credit records for a user."""
+    with get_db() as conn:
+        certs = conn.execute(
+            """
+            SELECT c.*, p.title as project_title, p.engagement_model
+            FROM project_certificates c
+            JOIN projects p ON p.id = c.project_id
+            WHERE c.recipient_id = ?
+            ORDER BY c.issued_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+        return {"user_id": user_id, "certificates": [dict(c) for c in certs]}
 
 
 # ===================== Contact Endpoint =====================
@@ -1675,12 +1737,194 @@ async def sponsor_create_project(
     return {"status": "ok", "message": "Sponsor project creation authorized"}
 
 
-@app.post("/api/sponsor/withdraw")
-async def sponsor_withdraw_project(
-    data: Dict[str, Any],
-    user: Dict[str, Any] = Depends(require_role("sponsor")),
+# ===================== Phase 6: Project Lifecycle, Reviews, Exits =====================
+@app.post("/api/projects/{project_id}/close")
+async def post_close_project(
+    project_id: str,
+    req: Optional[ProjectCloseRequest] = None,
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
 ):
-    return {"status": "ok", "message": "Sponsor withdrawal authorized"}
+    """
+    Project close: closes the project, generates completion certificates for accepted members,
+    and opens structured reviews (SPEC.md Section 6 & 11).
+    """
+    with get_db() as conn:
+        proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+        if user["role"] != "admin" and user["id"] != proj["sponsor_id"]:
+            raise HTTPException(status_code=403, detail="Only project sponsor or admin can close project.")
+        outcome = req.outcome if req else None
+        return close_project(project_id, user["id"], outcome, conn)
+
+
+@app.post("/api/projects/{project_id}/reviews")
+async def post_project_review(
+    project_id: str,
+    req: ReviewSubmitRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Structured review submission:
+    scores 1-5 for Quality, Timeliness, Communication, Collaboration, Integrity
+    (plus Fairness and Clarity for companies).
+    Only members of closed project can review; one review per member per project;
+    tied to ledger entry; repeated high ratings down-weighted.
+    """
+    with get_db() as conn:
+        return submit_project_review(project_id, user["id"], req.model_dump(), conn)
+
+
+@app.get("/api/projects/{project_id}/reviews")
+async def get_project_reviews(
+    project_id: str,
+    user: Optional[Dict[str, Any]] = Depends(get_optional_user),
+):
+    """Returns reviews and member review eligibility for a project."""
+    with get_db() as conn:
+        proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        revs = conn.execute(
+            """
+            SELECT r.*, u1.name as reviewer_name, u1.role as reviewer_role,
+                   u2.name as reviewee_name, u2.role as reviewee_role
+            FROM reviews r
+            JOIN users u1 ON u1.id = r.reviewer_id
+            JOIN users u2 ON u2.id = r.reviewee_id
+            WHERE r.project_id = ?
+            ORDER BY r.created_at DESC
+            """,
+            (project_id,),
+        ).fetchall()
+
+        eligibility = []
+        if user and proj["status"] == "closed":
+            candidates = conn.execute(
+                """
+                SELECT DISTINCT u.id, u.name, u.role
+                FROM users u
+                WHERE u.id = ? OR EXISTS (
+                    SELECT 1 FROM project_members pm
+                    WHERE pm.project_id = ? AND pm.user_id = u.id AND pm.status IN ('accepted', 'quit')
+                )
+                """,
+                (proj["sponsor_id"], project_id),
+            ).fetchall()
+
+            my_revs = {r["reviewee_id"]: dict(r) for r in revs if r["reviewer_id"] == user["id"]}
+            for c in candidates:
+                if c["id"] != user["id"]:
+                    eligibility.append({
+                        "user_id": c["id"],
+                        "name": c["name"],
+                        "role": c["role"],
+                        "already_reviewed": c["id"] in my_revs,
+                        "review": my_revs.get(c["id"]),
+                    })
+
+        return {
+            "project_id": project_id,
+            "project_status": proj["status"],
+            "reviews": [dict(r) for r in revs],
+            "review_eligibility": eligibility,
+        }
+
+
+@app.post("/api/projects/{project_id}/quit")
+async def post_candidate_quit(
+    project_id: str,
+    req: CandidateQuitRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Candidate quits midway:
+    paid only for accepted or reviewed work, money already released stays theirs,
+    penalty -0.5 stars unless admin marks good cause, credit kept, access revoked,
+    unearned part returns to pool. Returns before-and-after rupee table.
+    """
+    with get_db() as conn:
+        good_cause = bool(req.good_cause) if user["role"] == "admin" else False
+        return candidate_quit_project(
+            project_id=project_id,
+            candidate_id=user["id"],
+            reason=req.reason or "Candidate departed project midway",
+            good_cause=good_cause,
+            actor_id=user["id"],
+            conn=conn,
+        )
+
+
+@app.post("/api/projects/{project_id}/members/{target_user_id}/quit")
+async def post_member_quit_by_admin(
+    project_id: str,
+    target_user_id: str,
+    req: CandidateQuitRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """Admin or candidate quits a member from a project with optional good cause."""
+    if user["role"] != "admin" and user["id"] != target_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    with get_db() as conn:
+        good_cause = bool(req.good_cause) if user["role"] == "admin" else False
+        return candidate_quit_project(
+            project_id=project_id,
+            candidate_id=target_user_id,
+            reason=req.reason or "Candidate departed project",
+            good_cause=good_cause,
+            actor_id=user["id"],
+            conn=conn,
+        )
+
+
+@app.post("/api/projects/{project_id}/withdraw")
+async def post_project_withdraw(
+    project_id: str,
+    req: SponsorWithdrawRequest,
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """
+    Sponsor withdraws sponsorship midway:
+    all locked and unreleased funds go to team by charter split & contribution weights,
+    PLUS 10% compensation charged to sponsor wallet; sponsor -0.5 stars,
+    withdrawal count on company record, members keep credit.
+    Returns before-and-after rupee table.
+    """
+    with get_db() as conn:
+        proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+        if user["role"] != "admin" and user["id"] != proj["sponsor_id"]:
+            raise HTTPException(status_code=403, detail="Only project sponsor or admin can withdraw project.")
+        return sponsor_withdraw_project(
+            project_id=project_id,
+            reason=req.reason or "Withdrew project sponsorship midway",
+            actor_id=user["id"],
+            conn=conn,
+        )
+
+
+@app.post("/api/sponsor/withdraw")
+async def sponsor_withdraw_project_route(
+    data: Dict[str, Any],
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """Legacy route for sponsor withdrawal supporting project_id in body."""
+    target_project_id = data.get("project_id", "proj_retinopathy")
+    reason = data.get("reason", "Withdrew project sponsorship midway")
+    with get_db() as conn:
+        proj = conn.execute("SELECT * FROM projects WHERE id = ?", (target_project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+        if user["role"] != "admin" and user["id"] != proj["sponsor_id"]:
+            raise HTTPException(status_code=403, detail="Only project sponsor or admin can withdraw.")
+        return sponsor_withdraw_project(
+            project_id=target_project_id,
+            reason=reason,
+            actor_id=user["id"],
+            conn=conn,
+        )
 
 
 @app.get("/api/admin/audit")
