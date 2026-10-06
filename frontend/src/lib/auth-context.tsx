@@ -19,7 +19,7 @@ interface AuthContextType {
   isLoading: boolean;
   notifications: NotificationItem[];
   unreadCount: number;
-  login: (email: string, password?: string) => Promise<void>;
+  login: (email: string, password?: string, expectedRole?: string) => Promise<any>;
   signup: (payload: {
     email: string;
     password?: string;
@@ -27,7 +27,7 @@ interface AuthContextType {
     name: string;
     headline?: string;
     skills?: string[];
-  }) => Promise<void>;
+  }) => Promise<any>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
@@ -74,17 +74,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (email: string, password = "Password123!") => {
+  const login = async (email: string, password = "Password123!", expectedRole?: string) => {
     setIsLoading(true);
     try {
       const res = await apiFetch<{ status: string; user: any }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
+
+      const userRole = res.user.role;
+      if (expectedRole && userRole !== expectedRole) {
+        // Clear session immediately
+        await apiFetch("/api/auth/logout", { method: "POST" });
+        setUser(null);
+        const formatRole = (r: string) => {
+          if (r === "sponsor") return "Company / Sponsor";
+          return r.charAt(0).toUpperCase() + r.slice(1);
+        };
+        const errMsg = `This account is registered as a ${formatRole(userRole)}. Choose ${formatRole(userRole)} to continue.`;
+        toast.error(errMsg);
+        throw new Error(errMsg);
+      }
+
       await refreshUser();
       toast.success(`Welcome back, ${res.user.name}!`);
+      return res.user;
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      if (!err.message?.includes("registered as")) {
+        toast.error(err.message || "Login failed");
+      }
       throw err;
     } finally {
       setIsLoading(false);
@@ -109,7 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }),
       });
       await refreshUser();
-      toast.success("Account created successfully!");
+      toast.success("Account created successfully! Welcome to VOUCH.");
+      return res.user;
     } catch (err: any) {
       toast.error(err.message || "Signup failed");
       throw err;
