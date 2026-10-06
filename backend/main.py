@@ -27,6 +27,10 @@ from backend.rbac import require_role, check_confidential_brief_access
 from backend.ledger import record_ledger_entry, verify_ledger, simulate_tamper
 from backend.charter import publish_or_update_charter, accept_charter
 from backend.payout import calculate_milestone_payout
+from backend.ai_scoping import scope_problem
+from backend.matchmaking import get_project_candidate_matches
+from backend.pros_cons import compute_user_pros_and_cons, compute_company_pros_and_cons
+import uuid
 
 from contextlib import asynccontextmanager
 
@@ -126,6 +130,58 @@ class ContactRequest(BaseModel):
     email: str
     subject: str
     message: str
+
+
+class ScopeRequest(BaseModel):
+    title: str
+    public_summary: str
+    confidential_brief: Optional[str] = ""
+    budget: Optional[int] = 0
+    engagement_model: Optional[str] = "funded"
+
+
+class CreateProblemRequest(BaseModel):
+    title: str
+    public_summary: str
+    confidential_brief: str
+    sensitivity_label: Optional[str] = "Confidential"
+    budget: Optional[int] = 0
+    engagement_model: Optional[str] = "funded"
+    datasets: Optional[List[str]] = []
+    milestones: Optional[List[Dict[str, Any]]] = []
+    charter: Optional[Dict[str, Any]] = None
+
+
+class WalletTopUpRequest(BaseModel):
+    amount: int
+
+
+class LockMilestoneRequest(BaseModel):
+    amount: Optional[int] = None
+
+
+class ApplyProjectRequest(BaseModel):
+    role: Optional[str] = "student"
+    pitch: Optional[str] = ""
+
+
+class InviteCandidateRequest(BaseModel):
+    candidate_id: str
+    role: Optional[str] = "student"
+    notes: Optional[str] = ""
+
+
+class ConReplyRequest(BaseModel):
+    con_key: str
+    reply_text: str
+
+
+def send_in_app_notification(user_id: str, title: str, message: str, link: str, conn):
+    notif_id = f"notif_{uuid.uuid4().hex[:12]}"
+    conn.execute(
+        "INSERT INTO notifications (id, user_id, title, message, link, read) VALUES (?, ?, ?, ?, ?, 0)",
+        (notif_id, user_id, title, message, link),
+    )
 
 
 # ===================== Auth Endpoints =====================
@@ -876,6 +932,687 @@ async def post_publish_charter(
     )
 
 
+# ===================== Core Story Endpoints (Steps 1 - 7) =====================
+
+@app.post("/api/ai/scope")
+async def post_ai_scope(req: ScopeRequest):
+    """Decomposes problem into editable milestones with required skills and budget."""
+    return scope_problem(
+        title=req.title,
+        public_summary=req.public_summary,
+        confidential_brief=req.confidential_brief or "",
+        budget=req.budget or 0,
+        engagement_model=req.engagement_model or "funded",
+    )
+
+
+@app.post("/api/sponsor/problems")
+async def post_sponsor_problem(
+    req: CreateProblemRequest,
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """Sponsor posts a problem with milestones and publishes Charter v1."""
+    with get_db() as conn:
+        project_id = f"proj_{uuid.uuid4().hex[:10]}"
+        budget = int(req.budget or 0)
+
+        conn.execute(
+            """
+            INSERT INTO projects (
+                id, title, public_summary, confidential_brief, datasets_json,
+                budget, engagement_model, sensitivity_label, status, sponsor_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)
+            """,
+            (
+                project_id,
+                req.title,
+                req.public_summary,
+                req.confidential_brief,
+                json.dumps(req.datasets or []),
+                budget,
+                req.engagement_model,
+                req.sensitivity_label or "Confidential",
+                user["id"],
+            ),
+        )
+
+        # Insert milestones
+        milestones_created = []
+        for idx, m in enumerate(req.milestones or []):
+            seq = m.get("sequence", idx + 1)
+            ms_id = f"ms_{project_id}_{seq}"
+            ms_budget = int(m.get("budget", 0))
+            skills = m.get("skills", [])
+            conn.execute(
+                """
+                INSERT INTO milestones (id, project_id, sequence, title, description, skills_json, budget, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                """,
+                (
+                    ms_id,
+                    project_id,
+                    seq,
+                    m.get("title", f"Milestone {seq}"),
+                    m.get("description", ""),
+                    json.dumps(skills),
+                    ms_budget,
+                ),
+            )
+            milestones_created.append({"id": ms_id, "sequence": seq, "budget": ms_budget})
+
+        # Add sponsor as member
+        conn.execute(
+            """
+            INSERT INTO project_members (id, project_id, user_id, role, status)
+            VALUES (?, ?, ?, 'sponsor', 'accepted')
+            """,
+            (f"pm_{project_id}_{user['id']}", project_id, user["id"]),
+        )
+
+        # Log project creation to ledger
+        record_ledger_entry(
+            actor=user["id"],
+            action="PROJECT_CREATED",
+            payload={
+                "project_id": project_id,
+                "title": req.title,
+                "budget": budget,
+                "engagement_model": req.engagement_model,
+                "sensitivity_label": req.sensitivity_label,
+            },
+            conn=conn,
+        )
+
+        send_in_app_notification(
+            user_id=user["id"],
+            title="Problem Created & Charter v1 Ready",
+            message=f"'{req.title}' posted with {len(milestones_created)} milestones.",
+            link=f"/sponsor/projects/{project_id}",
+            conn=conn,
+        )
+
+    # Publish Charter v1
+    charter_data = req.charter or {}
+    publish_or_update_charter(
+        project_id=project_id,
+        actor_id=user["id"],
+        scope=charter_data.get("scope", req.public_summary),
+        ip_clause=charter_data.get("ip_clause", "Standard platform IP terms apply."),
+        confidentiality_clause=charter_data.get("confidentiality_clause", "Confidential brief protected under platform non-disclosure."),
+        exit_terms=charter_data.get("exit_terms", "Pro-rata payout for accepted milestones."),
+        commercialisation_clause=charter_data.get("commercialisation_clause", "Commercialization terms governed by engagement model."),
+        split_config={
+            "platform_fee_pct": 0.10,
+            "ai_reserve_pct": 0.05,
+            "expert_pool_pct": 0.30,
+            "student_pool_pct": 0.70,
+            "student_weights": DEFAULT_STUDENT_WEIGHTS,
+        },
+        engagement_model=req.engagement_model or "funded",
+    )
+
+    return {
+        "status": "created",
+        "project_id": project_id,
+        "title": req.title,
+        "milestones_count": len(milestones_created),
+    }
+
+
+@app.get("/api/projects/{project_id}/matchmaking")
+async def get_project_matchmaking(
+    project_id: str,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Ranked matchmaking candidates.
+    STRICT ACCESS CONTROL: Only the project sponsor or an admin can access candidate matchmaking.
+    """
+    with get_db() as conn:
+        proj = conn.execute("SELECT sponsor_id FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        if user["role"] != "admin" and user["id"] != proj["sponsor_id"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden: Matchmaking candidates are only visible to the project sponsor and admin.",
+            )
+
+        return get_project_candidate_matches(project_id, conn, log_exclusions=True)
+
+
+@app.post("/api/projects/{project_id}/apply")
+async def apply_to_project(
+    project_id: str,
+    req: ApplyProjectRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """Student or expert submits an application to join a project."""
+    if user["role"] not in ("student", "expert", "admin"):
+        raise HTTPException(status_code=403, detail="Only students and experts can apply to projects.")
+
+    with get_db() as conn:
+        proj = conn.execute("SELECT id, title, sponsor_id FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        # Check existing membership
+        existing = conn.execute(
+            "SELECT id, status FROM project_members WHERE project_id = ? AND user_id = ?",
+            (project_id, user["id"]),
+        ).fetchone()
+
+        if existing and existing["status"] in ("accepted", "applied"):
+            return {"status": "already_applied", "message": f"Application already recorded ({existing['status']})."}
+
+        pm_id = f"pm_{project_id}_{user['id']}"
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, status)
+            VALUES (?, ?, ?, ?, 'applied')
+            """,
+            (pm_id, project_id, user["id"], req.role or user["role"]),
+        )
+
+        record_ledger_entry(
+            actor=user["id"],
+            action="PROJECT_APPLICATION_SUBMITTED",
+            payload={
+                "project_id": project_id,
+                "applicant_id": user["id"],
+                "role": req.role or user["role"],
+                "pitch": req.pitch or "",
+            },
+            conn=conn,
+        )
+
+        send_in_app_notification(
+            user_id=proj["sponsor_id"],
+            title="New Contributor Application",
+            message=f"{user['name']} applied as {req.role or user['role']} on '{proj['title']}'.",
+            link=f"/sponsor/projects/{project_id}",
+            conn=conn,
+        )
+
+        return {"status": "applied", "message": "Application submitted successfully."}
+
+
+@app.post("/api/projects/{project_id}/invite")
+async def invite_to_project(
+    project_id: str,
+    req: InviteCandidateRequest,
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """Sponsor invites a candidate to join project."""
+    with get_db() as conn:
+        proj = conn.execute("SELECT id, title, sponsor_id FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        cand = conn.execute("SELECT id, name, role FROM users WHERE id = ?", (req.candidate_id,)).fetchone()
+        if not cand:
+            raise HTTPException(status_code=404, detail="Candidate not found")
+
+        pm_id = f"pm_{project_id}_{req.candidate_id}"
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO project_members (id, project_id, user_id, role, status)
+            VALUES (?, ?, ?, ?, 'invited')
+            """,
+            (pm_id, project_id, req.candidate_id, req.role or cand["role"]),
+        )
+
+        record_ledger_entry(
+            actor=user["id"],
+            action="PROJECT_INVITATION_SENT",
+            payload={
+                "project_id": project_id,
+                "candidate_id": req.candidate_id,
+                "role": req.role or cand["role"],
+                "notes": req.notes or "",
+            },
+            conn=conn,
+        )
+
+        send_in_app_notification(
+            user_id=req.candidate_id,
+            title="Project Invitation Received",
+            message=f"You have been invited to collaborate on '{proj['title']}'. Review the charter to accept.",
+            link=f"/charters/{project_id}",
+            conn=conn,
+        )
+
+        return {"status": "invited", "message": f"Invitation sent to {cand['name']}."}
+
+
+@app.post("/api/users/{user_id}/con-reply")
+async def post_con_reply(
+    user_id: str,
+    req: ConReplyRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Candidate posts a public reply to a watch-out (con).
+    STRICT ACCESS CONTROL: A user can reply ONLY to their own cons.
+    """
+    if current_user["role"] != "admin" and current_user["id"] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: You can only reply to your own watch-outs.",
+        )
+
+    with get_db() as conn:
+        reply_id = f"reply_{uuid.uuid4().hex[:10]}"
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO con_replies (id, user_id, con_key, reply_text, ledger_ref)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (reply_id, user_id, req.con_key, req.reply_text, f"ledger_reply_{reply_id}"),
+        )
+
+        record_ledger_entry(
+            actor=current_user["id"],
+            action="CON_REPLY_POSTED",
+            payload={
+                "user_id": user_id,
+                "con_key": req.con_key,
+                "reply_text": req.reply_text,
+            },
+            conn=conn,
+        )
+
+        return {
+            "status": "success",
+            "message": "Public reply published and anchored to immutable ledger.",
+            "reply": {
+                "id": reply_id,
+                "con_key": req.con_key,
+                "reply_text": req.reply_text,
+            },
+        }
+
+
+@app.post("/api/sponsor/wallet/top-up")
+async def post_wallet_top_up(
+    req: WalletTopUpRequest,
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """Top up simulated sponsor wallet by integer rupees."""
+    if req.amount <= 0:
+        raise HTTPException(status_code=400, detail="Top-up amount must be a positive integer in rupees.")
+
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE wallets SET balance = balance + ? WHERE user_id = ?",
+            (req.amount, user["id"]),
+        )
+        updated = conn.execute("SELECT balance FROM wallets WHERE user_id = ?", (user["id"],)).fetchone()
+        new_bal = updated["balance"] if updated else req.amount
+
+        record_ledger_entry(
+            actor=user["id"],
+            action="WALLET_TOPUP",
+            payload={
+                "sponsor_id": user["id"],
+                "amount": req.amount,
+                "new_balance": new_bal,
+            },
+            conn=conn,
+        )
+
+        send_in_app_notification(
+            user_id=user["id"],
+            title="Wallet Top-Up Confirmed",
+            message=f"Added Rs {req.amount:,} to simulated sponsor balance. Current: Rs {new_bal:,}.",
+            link="/sponsor/wallet",
+            conn=conn,
+        )
+
+        return {"status": "success", "amount": req.amount, "balance": new_bal}
+
+
+@app.get("/api/sponsor/wallet")
+async def get_sponsor_wallet(
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """Returns wallet balance, locker summary, and top-up transactions."""
+    with get_db() as conn:
+        w = conn.execute("SELECT balance FROM wallets WHERE user_id = ?", (user["id"],)).fetchone()
+        balance = w["balance"] if w else 0
+
+        # Lockers funded by this sponsor's projects
+        lockers = conn.execute(
+            """
+            SELECT l.id, l.project_id, l.milestone_id, l.amount, l.status, l.funded_at, l.released_at, p.title as project_title
+            FROM escrow_lockers l
+            JOIN projects p ON p.id = l.project_id
+            WHERE p.sponsor_id = ?
+            ORDER BY l.funded_at DESC
+            """,
+            (user["id"],),
+        ).fetchall()
+
+        total_locked = sum(l["amount"] for l in lockers if l["status"] == "funded")
+        total_released = sum(l["amount"] for l in lockers if l["status"] == "released")
+
+        # Top-ups from ledger
+        topups = conn.execute(
+            """
+            SELECT seq, timestamp, payload_json FROM ledger
+            WHERE action = 'WALLET_TOPUP' AND actor = ?
+            ORDER BY seq DESC
+            """,
+            (user["id"],),
+        ).fetchall()
+
+        return {
+            "balance": balance,
+            "total_locked": total_locked,
+            "total_released": total_released,
+            "lockers": [dict(l) for l in lockers],
+            "topups": [
+                {
+                    "seq": t["seq"],
+                    "timestamp": t["timestamp"],
+                    **json.loads(t["payload_json"]),
+                }
+                for t in topups
+            ],
+        }
+
+
+@app.post("/api/projects/{project_id}/milestones/{milestone_id}/lock")
+async def post_lock_milestone(
+    project_id: str,
+    milestone_id: str,
+    req: LockMilestoneRequest = LockMilestoneRequest(),
+    user: Dict[str, Any] = Depends(require_role("sponsor", "admin")),
+):
+    """
+    Funds and locks milestone budget in escrow from sponsor wallet.
+    Deducts integer rupees from sponsor wallet into milestone locker.
+    """
+    with get_db() as conn:
+        m = conn.execute(
+            "SELECT id, sequence, title, budget, status FROM milestones WHERE id = ? AND project_id = ?",
+            (milestone_id, project_id),
+        ).fetchone()
+        if not m:
+            raise HTTPException(status_code=404, detail="Milestone not found")
+
+        amount = int(req.amount or m["budget"])
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Milestone budget must be greater than zero to lock in escrow.")
+
+        # Check sponsor wallet balance
+        wallet = conn.execute("SELECT balance FROM wallets WHERE user_id = ?", (user["id"],)).fetchone()
+        if not wallet or wallet["balance"] < amount:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient wallet balance ({wallet['balance'] if wallet else 0} Rs). Top up to lock Rs {amount}.",
+            )
+
+        # Deduct from sponsor wallet
+        conn.execute("UPDATE wallets SET balance = balance - ? WHERE user_id = ?", (amount, user["id"]))
+
+        # Insert or update locker
+        locker_id = f"locker_{project_id}_{milestone_id}"
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO escrow_lockers (id, project_id, milestone_id, amount, status)
+            VALUES (?, ?, ?, ?, 'funded')
+            """,
+            (locker_id, project_id, milestone_id, amount),
+        )
+
+        # Update milestone status to funded
+        conn.execute("UPDATE milestones SET status = 'funded' WHERE id = ?", (milestone_id,))
+
+        record_ledger_entry(
+            actor=user["id"],
+            action="LOCKER_FUNDED",
+            payload={
+                "project_id": project_id,
+                "milestone_id": milestone_id,
+                "amount": amount,
+            },
+            conn=conn,
+        )
+
+        # Notify project members
+        members = conn.execute("SELECT user_id FROM project_members WHERE project_id = ?", (project_id,)).fetchall()
+        for mem in members:
+            send_in_app_notification(
+                user_id=mem["user_id"],
+                title="Milestone Escrow Funded",
+                message=f"Rs {amount:,} locked for Milestone {m['sequence']}: '{m['title']}'. Work is protected.",
+                link=f"/charters/{project_id}",
+                conn=conn,
+            )
+
+        return {"status": "funded", "milestone_id": milestone_id, "amount_locked": amount}
+
+
+@app.post("/api/projects/{project_id}/milestones/{milestone_id}/start")
+async def post_start_milestone(
+    project_id: str,
+    milestone_id: str,
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Starts a milestone.
+    ENFORCEMENT: A funded milestone cannot start before it is locked in escrow!
+    """
+    with get_db() as conn:
+        proj = conn.execute("SELECT id, title, engagement_model FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        m = conn.execute(
+            "SELECT id, sequence, title, budget, status FROM milestones WHERE id = ? AND project_id = ?",
+            (milestone_id, project_id),
+        ).fetchone()
+        if not m:
+            raise HTTPException(status_code=404, detail="Milestone not found")
+
+        # In funded models, verify locker is funded!
+        if proj["engagement_model"] == "funded" and m["budget"] > 0:
+            locker = conn.execute(
+                """
+                SELECT id, amount, status FROM escrow_lockers
+                WHERE project_id = ? AND (milestone_id = ? OR milestone_id IS NULL) AND status = 'funded'
+                """,
+                (project_id, milestone_id),
+            ).fetchone()
+
+            if not locker:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Milestone cannot start before it is locked in escrow.",
+                )
+
+        # Update milestone status to in_progress
+        conn.execute("UPDATE milestones SET status = 'in_progress' WHERE id = ?", (milestone_id,))
+
+        record_ledger_entry(
+            actor=user["id"],
+            action="MILESTONE_STARTED",
+            payload={
+                "project_id": project_id,
+                "milestone_id": milestone_id,
+                "sequence": m["sequence"],
+            },
+            conn=conn,
+        )
+
+        # In-app notifications to members
+        members = conn.execute("SELECT user_id FROM project_members WHERE project_id = ?", (project_id,)).fetchall()
+        for mem in members:
+            send_in_app_notification(
+                user_id=mem["user_id"],
+                title="Milestone Started",
+                message=f"Milestone {m['sequence']}: '{m['title']}' is now in progress.",
+                link=f"/charters/{project_id}",
+                conn=conn,
+            )
+
+        return {"status": "in_progress", "milestone_id": milestone_id}
+
+
+@app.get("/api/student/applications")
+async def get_student_applications(
+    user: Dict[str, Any] = Depends(require_role("student", "admin")),
+):
+    """Returns applications submitted by this student with status and charter link."""
+    with get_db() as conn:
+        apps = conn.execute(
+            """
+            SELECT pm.id, pm.project_id, pm.role, pm.status as member_status, pm.joined_at,
+                   p.title, p.public_summary, p.budget, p.engagement_model, p.status as project_status,
+                   u.name as sponsor_name,
+                   c.version as charter_version
+            FROM project_members pm
+            JOIN projects p ON p.id = pm.project_id
+            JOIN users u ON u.id = p.sponsor_id
+            LEFT JOIN charters c ON c.project_id = p.id AND c.is_current = 1
+            WHERE pm.user_id = ?
+            ORDER BY pm.joined_at DESC
+            """,
+            (user["id"],),
+        ).fetchall()
+
+        results = []
+        for a in apps:
+            a_dict = dict(a)
+            # Check if user accepted current charter
+            acc = conn.execute(
+                """
+                SELECT 1 FROM charter_acceptances
+                WHERE project_id = ? AND user_id = ? AND version = ?
+                """,
+                (a["project_id"], user["id"], a["charter_version"]),
+            ).fetchone()
+            a_dict["charter_accepted"] = bool(acc)
+            results.append(a_dict)
+
+        return {"applications": results}
+
+
+@app.get("/api/student/matches")
+async def get_student_matches(
+    user: Dict[str, Any] = Depends(require_role("student", "admin")),
+):
+    """Returns recommended open problems for this student with match score and sponsor record."""
+    with get_db() as conn:
+        projects = conn.execute(
+            "SELECT id, title, public_summary, budget, engagement_model, sponsor_id FROM projects WHERE status = 'open'"
+        ).fetchall()
+
+        matched = []
+        for p in projects:
+            try:
+                m_data = get_project_candidate_matches(p["id"], conn, log_exclusions=False)
+                # Find this student's score
+                cand_match = next((s for s in m_data["ranked_students"] if s["candidate_id"] == user["id"]), None)
+                if cand_match:
+                    company_pc = compute_company_pros_and_cons(p["sponsor_id"], conn)
+                    matched.append({
+                        "project": dict(p),
+                        "match_score": cand_match["total_score"],
+                        "score_pct": cand_match["score_pct"],
+                        "reasons": cand_match["reason_summary"],
+                        "company_pros_cons": company_pc,
+                    })
+            except Exception:
+                pass
+
+        matched.sort(key=lambda x: x["match_score"], reverse=True)
+        return {"matches": matched}
+
+
+@app.get("/api/expert/matches")
+async def get_expert_matches(
+    user: Dict[str, Any] = Depends(require_role("expert", "admin")),
+):
+    """Returns projects and invitations for this expert with conflict indicators."""
+    with get_db() as conn:
+        projects = conn.execute(
+            "SELECT id, title, public_summary, budget, engagement_model, sponsor_id FROM projects WHERE status = 'open'"
+        ).fetchall()
+
+        invites = conn.execute(
+            """
+            SELECT pm.project_id, pm.status, p.title, p.budget, p.engagement_model
+            FROM project_members pm
+            JOIN projects p ON p.id = pm.project_id
+            WHERE pm.user_id = ?
+            """,
+            (user["id"],),
+        ).fetchall()
+        invited_pids = {i["project_id"] for i in invites}
+
+        matched = []
+        for p in projects:
+            try:
+                m_data = get_project_candidate_matches(p["id"], conn, log_exclusions=False)
+                cand_match = next((e for e in m_data["ranked_experts"] if e["candidate_id"] == user["id"]), None)
+                conflicted = next((c for c in m_data["conflicted_candidates"] if c["candidate_id"] == user["id"]), None)
+
+                company_pc = compute_company_pros_and_cons(p["sponsor_id"], conn)
+                matched.append({
+                    "project": dict(p),
+                    "is_invited": p["id"] in invited_pids,
+                    "is_conflicted": bool(conflicted),
+                    "conflict_reason": conflicted["conflict_reason"] if conflicted else None,
+                    "match_score": cand_match["total_score"] if cand_match else 0.0,
+                    "score_pct": cand_match["score_pct"] if cand_match else 0,
+                    "reasons": cand_match["reason_summary"] if cand_match else "Declared conflict of interest",
+                    "company_pros_cons": company_pc,
+                })
+            except Exception:
+                pass
+
+        matched.sort(key=lambda x: (not x["is_conflicted"], x["is_invited"], x["match_score"]), reverse=True)
+        return {"matches": matched}
+
+
+@app.get("/api/companies/{sponsor_id}/pros-cons")
+async def get_company_pros_cons(sponsor_id: str):
+    """Returns Strengths and Watch-outs for a sponsor company based on contributor reviews."""
+    with get_db() as conn:
+        return compute_company_pros_and_cons(sponsor_id, conn)
+
+
+@app.get("/api/projects/{project_id}/activity")
+async def get_project_activity(project_id: str):
+    """Returns ledger activity trail for a project."""
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT seq, timestamp, actor, action, payload_json, entry_hash
+            FROM ledger
+            WHERE payload_json LIKE ?
+            ORDER BY seq DESC
+            LIMIT 50
+            """,
+            (f'%"{project_id}"%',),
+        ).fetchall()
+
+        entries = []
+        for r in rows:
+            entries.append({
+                "seq": r["seq"],
+                "timestamp": r["timestamp"],
+                "actor": r["actor"],
+                "action": r["action"],
+                "entry_hash": r["entry_hash"],
+                "payload": json.loads(r["payload_json"]),
+            })
+        return {"activity": entries}
+
+
 # ===================== Role Protected Routes (Testing RBAC) =====================
 @app.post("/api/sponsor/projects/create")
 async def sponsor_create_project(
@@ -917,6 +1654,7 @@ async def post_calculate_payout(req: PayoutCalcRequest):
         student_weights=req.student_weights,
         expert_present=req.expert_present,
     )
+
 
 
 # Mount static files if directory exists

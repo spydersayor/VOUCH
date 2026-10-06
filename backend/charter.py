@@ -81,6 +81,22 @@ def publish_or_update_charter(
             conn=conn,
         )
 
+        # In-app notifications to all project members
+        members = conn.execute("SELECT user_id FROM project_members WHERE project_id = ?", (project_id,)).fetchall()
+        for m in members:
+            if m["user_id"] != actor_id:
+                notif_id = f"notif_{uuid.uuid4().hex[:12]}"
+                conn.execute(
+                    "INSERT INTO notifications (id, user_id, title, message, link, read) VALUES (?, ?, ?, ?, ?, 0)",
+                    (
+                        notif_id,
+                        m["user_id"],
+                        f"Charter v{new_version} Published",
+                        f"Charter version {new_version} published for {project['title']}. Review terms to unlock brief.",
+                        f"/charters/{project_id}",
+                    ),
+                )
+
         return {
             "charter_id": charter_id,
             "project_id": project_id,

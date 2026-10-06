@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS projects (
     datasets_json TEXT DEFAULT '[]',
     budget INTEGER DEFAULT 0,
     engagement_model TEXT NOT NULL, -- funded, stipend, knowledge-sharing, institutional-credit
+    sensitivity_label TEXT DEFAULT 'Confidential', -- Public, Confidential, Strictly Restricted
     status TEXT DEFAULT 'open',     -- draft, open, in_progress, closed, withdrawn
     sponsor_id TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -213,6 +214,16 @@ CREATE TABLE IF NOT EXISTS contact_messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS con_replies (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    con_key TEXT NOT NULL,
+    reply_text TEXT NOT NULL,
+    ledger_ref TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS user_settings (
     user_id TEXT PRIMARY KEY,
     notification_invites INTEGER DEFAULT 1,
@@ -258,3 +269,8 @@ def get_db(db_path: str = DB_PATH) -> Generator[sqlite3.Connection, None, None]:
 def init_db(db_path: str = DB_PATH):
     with get_db(db_path) as conn:
         conn.executescript(SCHEMA_SQL)
+        try:
+            conn.execute("ALTER TABLE projects ADD COLUMN sensitivity_label TEXT DEFAULT 'Confidential'")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+

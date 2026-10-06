@@ -9,35 +9,39 @@ import { Button } from "@/components/ui/button";
 import { formatRupees } from "@/lib/utils";
 import Link from "next/link";
 import { Award, Wallet, Clock, Lock, CheckCircle2, ArrowRight } from "lucide-react";
+import { RoleSidebar } from "@/components/shell/RoleSidebar";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
 
   return (
     <RoleGuard allowedRoles={["student"]}>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-                Student Workspace
-              </h1>
-              <Badge variant={user?.newbie_badge ? "newbie" : "gold"}>
-                {user?.newbie_badge ? "NEWBIE BADGE" : `${user?.stars || "4.6"} ⭐`}
-              </Badge>
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        <RoleSidebar role="student" />
+        <main className="flex-1 p-8 animate-fade-up">
+          <div className="mx-auto max-w-7xl">
+            {/* Header */}
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+                    Student Workspace
+                  </h1>
+                  <Badge variant={user?.newbie_badge ? "newbie" : "gold"}>
+                    {user?.newbie_badge ? "NEWBIE BADGE" : `${user?.stars || "4.6"} ⭐`}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Welcome, {user?.name}. Track your open applications, locked milestones, and verified credentials.
+                </p>
+              </div>
+              <Button variant="default" asChild>
+                <Link href="/open-problems">
+                  <span>Browse Open Problems</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Welcome, {user?.name}. Track your open applications, locked milestones, and verified credentials.
-            </p>
-          </div>
-          <Button variant="default" asChild>
-            <Link href="/open-problems">
-              <span>Browse Open Problems</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -121,12 +125,14 @@ export default function StudentDashboard() {
                   </p>
                 </div>
                 <Button size="sm" asChild>
-                  <Link href="/open-problems">Review Charter & Accept</Link>
+                  <Link href="/charters/proj_retinopathy">Review Charter & Accept</Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
+          </div>
+        </main>
       </div>
     </RoleGuard>
   );

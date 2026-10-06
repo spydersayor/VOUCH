@@ -18,7 +18,68 @@ import {
   ShieldCheck,
   Star,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { ProsConsPanel } from "@/components/pros-cons/ProsConsPanel";
+
+function CompanyRecordSection({ sponsorId, sponsorName, sponsorStars }: { sponsorId: string; sponsorName: string; sponsorStars: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const toggleOpen = async () => {
+    if (!expanded && !data) {
+      setLoading(true);
+      try {
+        const res = await apiFetch<any>(`/api/companies/${sponsorId}/pros-cons`);
+        setData(res);
+      } catch {}
+      finally {
+        setLoading(false);
+      }
+    }
+    setExpanded(!expanded);
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-900/60 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+          <span className="font-bold text-slate-900 dark:text-white">
+            {sponsorName}
+          </span>
+          <div className="flex items-center text-amber-500 font-bold gap-0.5">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            <span>{sponsorStars}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={toggleOpen}
+          className="flex items-center gap-1 text-[11px] font-bold text-teal-600 hover:underline dark:text-teal-400"
+        >
+          <span>{expanded ? "Hide Review History" : "View Company Track Record & Review Evidence"}</span>
+          {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="pt-2">
+          {loading ? (
+            <div className="h-16 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+          ) : data ? (
+            <ProsConsPanel data={data} title="Sponsor Company Review Summary" />
+          ) : (
+            <p className="text-xs text-slate-500">Could not load company reviews.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ProjectItem {
   id: string;
@@ -201,29 +262,7 @@ export default function OpenProblemsPage() {
                   </p>
 
                   {/* Company Record Badge */}
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-900/60 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {p.sponsor_name}
-                      </span>
-                      <div className="flex items-center text-amber-500 font-bold gap-0.5">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span>{p.sponsor_stars}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 dark:text-slate-400">
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        100% On-Time Payment
-                      </span>
-                      <span>•</span>
-                      <span>0 Disputes</span>
-                      <span>•</span>
-                      <span>Escrow Guaranteed</span>
-                    </div>
-                  </div>
+                  <CompanyRecordSection sponsorId={p.sponsor_id} sponsorName={p.sponsor_name} sponsorStars={p.sponsor_stars} />
 
                   {/* Skills badges */}
                   {p.required_skills && p.required_skills.length > 0 && (

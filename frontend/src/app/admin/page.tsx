@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import { ShieldCheck, AlertTriangle, RefreshCw, FileText } from "lucide-react";
+import { RoleSidebar } from "@/components/shell/RoleSidebar";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -46,7 +47,10 @@ export default function AdminDashboard() {
 
   return (
     <RoleGuard allowedRoles={["admin"]}>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        <RoleSidebar role="admin" />
+        <main className="flex-1 p-8 animate-fade-up">
+          <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
@@ -135,6 +139,8 @@ export default function AdminDashboard() {
             </Button>
           </div>
         </div>
+          </div>
+        </main>
       </div>
     </RoleGuard>
   );

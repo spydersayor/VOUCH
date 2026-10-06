@@ -27,10 +27,44 @@ const PUBLIC_ROUTES = [
 ];
 
 const ROLES_TO_TEST = [
-  { role: "student", email: "student.a@vouch.local", dashboard: "/student" },
-  { role: "expert", email: "expert.a@vouch.local", dashboard: "/expert" },
-  { role: "sponsor", email: "sponsor@vouch.local", dashboard: "/sponsor" },
-  { role: "admin", email: "admin@vouch.local", dashboard: "/admin" },
+  {
+    role: "student",
+    email: "student.a@vouch.local",
+    dashboard: "/student",
+    routes: [
+      "/student",
+      "/student/applications",
+      "/student/matches",
+      "/student/credentials",
+    ],
+  },
+  {
+    role: "expert",
+    email: "expert.a@vouch.local",
+    dashboard: "/expert",
+    routes: [
+      "/expert",
+      "/expert/matches",
+      "/expert/conflicts",
+    ],
+  },
+  {
+    role: "sponsor",
+    email: "sponsor@vouch.local",
+    dashboard: "/sponsor",
+    routes: [
+      "/sponsor",
+      "/sponsor/post-problem",
+      "/sponsor/projects",
+      "/sponsor/wallet",
+    ],
+  },
+  {
+    role: "admin",
+    email: "admin@vouch.local",
+    dashboard: "/admin",
+    routes: ["/admin"],
+  },
 ];
 
 async function fetchWithCookie(url, cookie = "") {
@@ -116,15 +150,29 @@ async function runAudit() {
       continue;
     }
 
-    // Check dashboard
-    totalTested++;
-    visited.add(item.dashboard);
     const dashRes = await fetchWithCookie(`${FRONTEND_URL}${item.dashboard}`, session.cookie);
-    if (dashRes.status === 200) {
-      console.log(`  ✓ [200] Dashboard: ${item.dashboard}`);
+    if (dashRes.status === 200 || dashRes.status === 307 || dashRes.status === 308) {
+      console.log(`    ✓ [${dashRes.status}] Dashboard: ${item.dashboard}`);
     } else {
-      console.error(`  ✗ [${dashRes.status}] Dashboard: ${item.dashboard} -> FAILED`);
+      console.error(`    ✗ [${dashRes.status}] Dashboard: ${item.dashboard} -> FAILED`);
       failures.push({ route: item.dashboard, status: dashRes.status, role: item.role });
+    }
+
+    // Check all declared role routes
+    if (item.routes) {
+      for (const r of item.routes) {
+        if (!visited.has(`${item.role}:${r}`)) {
+          visited.add(`${item.role}:${r}`);
+          totalTested++;
+          const rRes = await fetchWithCookie(`${FRONTEND_URL}${r}`, session.cookie);
+          if (rRes.status === 200 || rRes.status === 307 || rRes.status === 308) {
+            console.log(`    ✓ [${rRes.status}] Role Route: ${r}`);
+          } else {
+            console.error(`    ✗ [${rRes.status}] Role Route: ${r} -> FAILED`);
+            failures.push({ route: r, status: rRes.status, role: item.role });
+          }
+        }
+      }
     }
 
     // Extract links in dashboard HTML

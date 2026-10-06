@@ -9,32 +9,36 @@ import { Button } from "@/components/ui/button";
 import { formatRupees } from "@/lib/utils";
 import Link from "next/link";
 import { Shield, CheckSquare, AlertCircle, ArrowRight } from "lucide-react";
+import { RoleSidebar } from "@/components/shell/RoleSidebar";
 
 export default function ExpertDashboard() {
   const { user } = useAuth();
 
   return (
     <RoleGuard allowedRoles={["expert"]}>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-                Expert Advisory Console
-              </h1>
-              <Badge variant="gold">{user?.stars || "4.9"} ⭐ RATING</Badge>
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        <RoleSidebar role="expert" />
+        <main className="flex-1 p-8 animate-fade-up">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+                    Expert Advisory Console
+                  </h1>
+                  <Badge variant="gold">{user?.stars || "4.9"} ⭐ RATING</Badge>
+                </div>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Welcome, {user?.name}. Guide student architectures, review code integrity, and approve milestones.
+                </p>
+              </div>
+              <Button variant="default" asChild>
+                <Link href="/expert/matches">
+                  <span>View Matched Initiatives</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Welcome, {user?.name}. Guide student architectures, review code integrity, and approve milestones.
-            </p>
-          </div>
-          <Button variant="default" asChild>
-            <Link href="/open-problems">
-              <span>View Projects I Guide</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <Card>
@@ -82,6 +86,8 @@ export default function ExpertDashboard() {
             </CardContent>
           </Card>
         </div>
+          </div>
+        </main>
       </div>
     </RoleGuard>
   );

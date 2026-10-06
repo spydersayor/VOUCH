@@ -18,7 +18,7 @@ def seed_database():
     with get_db() as conn:
         # Clear existing data cleanly
         tables = [
-            "user_settings", "contact_messages", "password_resets",
+            "con_replies", "user_settings", "contact_messages", "password_resets",
             "ratings_history", "notifications", "conflicts_of_interest",
             "ledger", "reviews", "payouts", "escrow_lockers", "milestones",
             "project_members", "charter_acceptances", "charters", "projects",
