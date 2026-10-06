@@ -57,4 +57,9 @@ SIMILARITY_FLAG_THRESHOLD = 0.40  # Jaccard index >= 0.40 flags for review
 import os
 
 # Database file
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vouch.db")
+# In production (Render) VOUCH_DB_PATH points to the mounted persistent disk.
+# Locally it falls back to the repo-root vouch.db.
+DB_PATH = os.environ.get(
+    "VOUCH_DB_PATH",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vouch.db"),
+)

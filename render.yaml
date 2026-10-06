@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: vouch-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: VOUCH_DB_PATH
+        value: /var/data/vouch.db
+      - key: FRONTEND_ORIGIN
+        value: https://vouch-app.vercel.app
+    disk:
+      name: vouch-data
+      mountPath: /var/data
+      sizeGB: 1

@@ -51,10 +51,16 @@ import uuid
 import hashlib
 
 from contextlib import asynccontextmanager
+from backend.config import DB_PATH
+from backend.seed import seed_database as _seed_database
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    if not os.path.exists(DB_PATH):
+        print("[vouch] Fresh database detected — seeding…")
+        _seed_database()
+    else:
+        init_db()
     yield
 
 app = FastAPI(
@@ -66,9 +72,12 @@ app = FastAPI(
 
 from backend.workspace_router import router as workspace_router
 
+_frontend_origin = os.environ.get("FRONTEND_ORIGIN", "")
+_allowed_origins = [_frontend_origin] if _frontend_origin else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
