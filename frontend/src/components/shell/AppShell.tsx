@@ -23,7 +23,14 @@ import {
 import { apiFetch } from "@/lib/api";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, notifications, unreadCount, logout, markAllNotificationsRead } = useAuth();
+  const {
+    user,
+    notifications,
+    unreadCount,
+    logout,
+    markNotificationRead,
+    markAllNotificationsRead,
+  } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -209,17 +216,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             No notifications yet.
                           </div>
                         ) : (
-                          notifications.slice(0, 6).map((n) => (
-                            <div
+                          notifications.slice(0, 5).map((n) => (
+                            <Link
                               key={n.id}
-                              className={`rounded-xl p-2.5 text-xs transition ${
+                              href={n.link || "/notifications"}
+                              onClick={() => {
+                                if (!n.read) markNotificationRead(n.id);
+                                setNotifOpen(false);
+                              }}
+                              className={`block rounded-xl p-2.5 text-xs transition hover:opacity-90 ${
                                 !n.read
-                                  ? "border border-teal-100 bg-teal-50/60 dark:border-teal-900 dark:bg-teal-950/40"
+                                  ? "border border-teal-100 bg-teal-50/80 dark:border-teal-900 dark:bg-teal-950/40"
                                   : "bg-slate-50 dark:bg-slate-800/60"
                               }`}
                             >
-                              <div className="font-semibold text-slate-900 dark:text-slate-100">
-                                {n.title}
+                              <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
+                                <span>{n.title}</span>
+                                {!n.read && (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+                                )}
                               </div>
                               <div className="mt-0.5 text-slate-600 dark:text-slate-400">
                                 {n.message}
@@ -227,7 +242,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                               <div className="mt-1 text-[10px] text-slate-400">
                                 {new Date(n.created_at).toLocaleTimeString()}
                               </div>
-                            </div>
+                            </Link>
                           ))
                         )}
                       </div>

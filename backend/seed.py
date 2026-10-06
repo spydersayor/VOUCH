@@ -137,18 +137,27 @@ def seed_database():
                 (u["id"],),
             )
 
-        # Sample initial notifications
+        # Sample initial notifications for all roles
         seed_notifs = [
-            ("notif_1", "usr_student_a", "Charter Published: Low-cost diabetic retinopathy", "Sponsor published Charter v1. Review terms and accept to unlock brief.", "#/projects/proj_retinopathy"),
-            ("notif_2", "usr_student_a", "Payout Credited", "Milestone 1 payout of Rs 25,783 credited to your wallet from closed project.", "#/notifications"),
-            ("notif_3", "usr_student_b", "Integrity Check Notice", "Code similarity check cleared by Expert A on previous project.", "#/notifications"),
-            ("notif_4", "usr_expert_a", "Project Guidance Invitation", "Apex Health AI invites you to guide the Diabetic Retinopathy initiative.", "#/projects/proj_retinopathy"),
-            ("notif_5", "usr_sponsor", "Escrow Funded", "Rs 1,00,000 locked in milestone escrow for Diabetic Retinopathy.", "#/projects/proj_retinopathy"),
+            ("notif_1", "usr_student_a", "Charter v1 Ready for Review", "Apex Health AI published Charter v1 for Diabetic Retinopathy. Please review terms and accept.", "/charters/proj_retinopathy", 0),
+            ("notif_2", "usr_student_a", "Milestone Payout Credited", "Milestone M1 on Past Project released. Rs 25,783 credited to wallet.", "/student/earnings", 1),
+            ("notif_3", "usr_student_a", "Star Rating Updated", "Composite rating updated to 4.6 ⭐ based on peer review.", "/users/usr_student_a", 1),
+            ("notif_4", "usr_student_b", "Charter v1 Ready for Review", "Review terms for Diabetic Retinopathy project.", "/charters/proj_retinopathy", 0),
+            ("notif_5", "usr_student_b", "Integrity Review Cleared", "Similarity audit on Past Project 2 marked cleared by mentor.", "/student/projects", 1),
+            ("notif_6", "usr_student_c", "Welcome to VOUCH Sandbox", "Newbie Badge assigned. You have an exploration matching boost for open challenges.", "/student", 0),
+            ("notif_7", "usr_expert_a", "Co-Sign Charter Request", "Apex Health AI invites you as Lead Expert on Diabetic Retinopathy.", "/charters/proj_retinopathy", 0),
+            ("notif_8", "usr_expert_a", "Code Review Pending", "Student A submitted Milestone 1 code artifacts for technical verification.", "/expert/reviews", 0),
+            ("notif_9", "usr_expert_a", "Expert Honorarium Credited", "Rs 25,500 milestone payout share credited to wallet.", "/expert/earnings", 1),
+            ("notif_10", "usr_expert_b", "Conflict of Interest Recorded", "Your declared affiliation with RetinaVision Labs is logged to the ledger.", "/expert/conflicts", 1),
+            ("notif_11", "usr_sponsor", "Escrow Locker Funded", "Rs 1,00,000 locked for Diabetic Retinopathy project.", "/sponsor/wallet", 1),
+            ("notif_12", "usr_sponsor", "Contributor Applied", "Student A submitted qualifications for Diabetic Retinopathy.", "/charters/proj_retinopathy", 0),
+            ("notif_13", "usr_admin", "Ledger Integrity Verified", "Cryptographic hash chain validated intact across all blocks.", "/admin/ledger", 0),
+            ("notif_14", "usr_admin", "Dispute Queue Clean", "Zero active disputes currently pending arbitration.", "/admin/disputes", 1),
         ]
-        for n_id, u_id, title, msg, link in seed_notifs:
+        for n_id, u_id, title, msg, link, read_status in seed_notifs:
             conn.execute(
-                "INSERT INTO notifications (id, user_id, title, message, link, read) VALUES (?, ?, ?, ?, ?, 0)",
-                (n_id, u_id, title, msg, link),
+                "INSERT INTO notifications (id, user_id, title, message, link, read) VALUES (?, ?, ?, ?, ?, ?)",
+                (n_id, u_id, title, msg, link, read_status),
             )
 
         # 2. Declare conflict of interest for Expert B with Apex Health AI
