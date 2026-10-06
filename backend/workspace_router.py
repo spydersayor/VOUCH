@@ -89,9 +89,39 @@ def check_workspace_access(project_id: str, user: Dict[str, Any], conn) -> Dict[
     ).fetchone()
 
     if not member:
+        # Determine specific reason for helpful 403 UX (SPEC.md Section 5 Polish)
+        any_member = conn.execute(
+            "SELECT id, role, status FROM project_members WHERE project_id = ? AND user_id = ?",
+            (project_id, user["id"]),
+        ).fetchone()
+
+        if any_member:
+            if any_member["status"] == "quit":
+                relationship = "member_quit"
+                msg = "Access revoked: You exited this project. Your credit for accepted deliverables remains verified on the cryptographic ledger."
+            else:
+                curr_charter = conn.execute(
+                    "SELECT version FROM charters WHERE project_id = ? AND is_current = 1",
+                    (project_id,),
+                ).fetchone()
+                charter_v = curr_charter["version"] if curr_charter else 1
+                acc = conn.execute(
+                    "SELECT 1 FROM charter_acceptances WHERE project_id = ? AND user_id = ? AND version = ?",
+                    (project_id, user["id"], charter_v),
+                ).fetchone()
+                if not acc:
+                    relationship = "charter_not_accepted"
+                    msg = f"Charter not accepted: You have an invitation/role on this project, but you must accept Charter v{charter_v} to unlock workspace resources."
+                else:
+                    relationship = "invite_pending"
+                    msg = f"Membership status '{any_member['status']}': Awaiting sponsor onboarding confirmation."
+        else:
+            relationship = "not_invited"
+            msg = f"Not invited: Your account ({user.get('name', user.get('email'))}) is not an accepted collaborator on '{proj['title']}'. Switch to an invited account or browse open initiatives."
+
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: You must be an accepted project member, the sponsor, or an admin to access this workspace.",
+            detail=f"Forbidden: {msg} [relationship={relationship}]",
         )
 
     # Check charter acceptance
