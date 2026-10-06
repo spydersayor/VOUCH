@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
@@ -262,21 +262,21 @@ export default function AdminDashboard() {
     <RoleGuard allowedRoles={["admin"]}>
       <div className="flex min-h-[calc(100vh-4rem)]">
         <RoleSidebar role="admin" />
-        <main className="flex-1 p-6 sm:p-8 animate-fade-up">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 p-6 sm:p-10 animate-fade-up">
+          <div className="mx-auto max-w-7xl space-y-8">
             {/* Header */}
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.06] pb-6">
               <div>
                 <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-                    Governance & Operations Console
+                  <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                    System Administration &amp; Governance
                   </h1>
-                  <Badge variant="subtle" className="bg-teal-500/10 text-teal-600 dark:text-teal-400">
-                    ADMIN
+                  <Badge variant="subtle" className="font-mono text-[10px] text-[#b9a9ff] border-[#8f7cff]/30 bg-[#8f7cff]/10">
+                    OPERATIONS
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  Audit immutable cryptographic integrity, manage KYC verification, inspect similarity violations, and mediate disputes.
+                <p className="mt-1 text-xs sm:text-sm text-[#9d9da8]">
+                  Audit immutable cryptographic integrity, manage KYC verification, inspect similarity violations, mediate disputes, and test tamper resilience.
                 </p>
               </div>
 
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
                   size="sm"
                   disabled={resetting}
                   onClick={handleResetData}
-                  className="gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40 text-xs font-semibold"
+                  className="gap-1.5 border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-xs font-semibold"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   <span>{resetting ? "Resetting..." : "Reset Demo Data"}</span>
@@ -296,28 +296,28 @@ export default function AdminDashboard() {
 
             {/* Tamper Alert Banner (if chain broken) */}
             {ledgerStatus && ledgerStatus.status === "tampered" && (
-              <div className="mb-6 rounded-2xl border border-rose-500/50 bg-rose-500/10 p-4 text-rose-900 dark:text-rose-200 shadow-lg">
+              <div className="rounded-2xl border border-rose-500/50 bg-rose-500/10 p-5 text-rose-200 shadow-lg">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-rose-600 dark:text-rose-400" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-rose-400" />
                   <div className="flex-1">
-                    <h4 className="text-sm font-black uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                    <h4 className="text-sm font-black uppercase tracking-wider text-rose-300">
                       CRITICAL: CRYPTOGRAPHIC LEDGER CHAIN BROKEN AT ENTRY #{ledgerStatus.broken_seq}
                     </h4>
-                    <p className="mt-1 text-xs text-rose-800 dark:text-rose-300">
+                    <p className="mt-1 text-xs text-rose-300">
                       Sequential SHA-256 validation failed. The stored entry hash or prev_hash does not match cryptographic recalculation.
                     </p>
-                    <div className="mt-2 text-[11px] font-mono bg-rose-950/20 p-2 rounded border border-rose-500/30">
+                    <div className="mt-2 text-[11px] font-mono bg-rose-950/40 p-2.5 rounded-lg border border-rose-500/30">
                       <div>Expected: {ledgerStatus.expected_prev || "Hash mismatch"}</div>
                       <div>Actual:   {ledgerStatus.actual_prev || "Corrupted payload in SQLite"}</div>
                     </div>
-                    <div className="mt-3">
+                    <div className="mt-3 flex gap-2">
                       <Button
                         size="sm"
                         disabled={repairing}
                         onClick={handleRepairLedger}
-                        className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
+                        className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1.5"
                       >
-                        <Wrench className="h-3.5 w-3.5 mr-1.5" />
+                        <Wrench className="h-3.5 w-3.5" />
                         <span>{repairing ? "Repairing..." : "Repair Demo Ledger"}</span>
                       </Button>
                     </div>
@@ -327,19 +327,19 @@ export default function AdminDashboard() {
             )}
 
             {/* Summary KPI Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Chain Health
                   </span>
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-xl font-black ${ledgerStatus?.status === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  <div className={`font-mono text-xl sm:text-2xl font-bold ${ledgerStatus?.status === 'ok' ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {ledgerStatus?.status === "ok" ? "VERIFIED INTACT" : `TAMPER AT #${ledgerStatus?.broken_seq || 2}`}
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500">
+                  <p className="mt-1 font-mono text-[11px] text-[#6f6f7b]">
                     {ledgerStatus?.count ? `${ledgerStatus.count} blocks anchored` : "Sequential SHA-256"}
                   </p>
                 </CardContent>
@@ -347,58 +347,58 @@ export default function AdminDashboard() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     KYC Verification
                   </span>
-                  <UserCheck className="h-4 w-4 text-teal-600" />
+                  <UserCheck className="h-4 w-4 text-[#b9a9ff]" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-black text-slate-900 dark:text-slate-100">
+                  <div className="font-mono text-xl sm:text-2xl font-bold text-white">
                     {users.filter((u) => u.is_kyc_verified).length} / {users.length}
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500">Simulated identity verified</p>
+                  <p className="mt-1 font-mono text-[11px] text-[#6f6f7b]">Simulated identity verified</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Flagged Content
                   </span>
-                  <Flag className="h-4 w-4 text-amber-600" />
+                  <Flag className="h-4 w-4 text-amber-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-black text-amber-600 dark:text-amber-400">
+                  <div className="font-mono text-xl sm:text-2xl font-bold text-amber-400">
                     {flags.length} Submissions
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500">Similarity &gt; 35% or flagged</p>
+                  <p className="mt-1 font-mono text-[11px] text-[#6f6f7b]">Similarity &gt; 35% or flagged</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Open Disputes
                   </span>
-                  <Scale className="h-4 w-4 text-indigo-600" />
+                  <Scale className="h-4 w-4 text-[#b9a9ff]" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                  <div className="font-mono text-xl sm:text-2xl font-bold text-white">
                     {disputes.filter((d) => d.status === "open").length} Pending
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500">Mediation & good cause</p>
+                  <p className="mt-1 font-mono text-[11px] text-[#6f6f7b]">Mediation & good cause</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="mb-6 flex border-b border-slate-200 dark:border-slate-800">
+            <div className="flex border-b border-white/[0.08] gap-2 overflow-x-auto">
               <button
                 onClick={() => setActiveTab("ledger")}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-mono font-bold transition-colors cursor-pointer ${
                   activeTab === "ledger"
-                    ? "border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    ? "border-[#b9a9ff] text-[#b9a9ff]"
+                    : "border-transparent text-[#8b8ea0] hover:text-white"
                 }`}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -407,10 +407,10 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => setActiveTab("kyc")}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-mono font-bold transition-colors cursor-pointer ${
                   activeTab === "kyc"
-                    ? "border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    ? "border-[#b9a9ff] text-[#b9a9ff]"
+                    : "border-transparent text-[#8b8ea0] hover:text-white"
                 }`}
               >
                 <UserCheck className="h-4 w-4" />
@@ -419,10 +419,10 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => setActiveTab("flags")}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-mono font-bold transition-colors cursor-pointer ${
                   activeTab === "flags"
-                    ? "border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    ? "border-[#b9a9ff] text-[#b9a9ff]"
+                    : "border-transparent text-[#8b8ea0] hover:text-white"
                 }`}
               >
                 <Flag className="h-4 w-4" />
@@ -431,10 +431,10 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => setActiveTab("disputes")}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-mono font-bold transition-colors cursor-pointer ${
                   activeTab === "disputes"
-                    ? "border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    ? "border-[#b9a9ff] text-[#b9a9ff]"
+                    : "border-transparent text-[#8b8ea0] hover:text-white"
                 }`}
               >
                 <Scale className="h-4 w-4" />
@@ -445,61 +445,65 @@ export default function AdminDashboard() {
             {/* TAB 1: Ledger Audit */}
             {activeTab === "ledger" && (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Immutable Ledger Audit
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                    Each platform event (charter signature, milestone acceptance, review submission, rating modification) is cryptographically chained via SHA-256 hash pointers.
-                  </p>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-bold text-white flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                      <span>Immutable Ledger Audit & Tamper Simulation</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Each platform event (charter signature, milestone acceptance, review submission, rating modification) is cryptographically chained via SHA-256 hash pointers.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={verifying}
+                        onClick={fetchLedgerVerification}
+                        className="gap-2 text-xs font-semibold"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        <span>{verifying ? "Verifying..." : "Verify Ledger Now"}</span>
+                      </Button>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      disabled={verifying}
-                      onClick={fetchLedgerVerification}
-                      className="gap-2 text-xs font-semibold"
-                    >
-                      <ShieldCheck className="h-4 w-4" />
-                      <span>{verifying ? "Verifying..." : "Verify Ledger Now"}</span>
-                    </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={tampering}
+                        onClick={handleSimulateTamper}
+                        className="gap-2 text-xs font-semibold"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>{tampering ? "Tampering..." : "Simulate Tamper on Block #2"}</span>
+                      </Button>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={tampering}
-                      onClick={handleSimulateTamper}
-                      className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30 text-xs font-semibold"
-                    >
-                      <AlertTriangle className="h-4 w-4" />
-                      <span>{tampering ? "Tampering..." : "Demo: Simulate Tamper on Entry #2"}</span>
-                    </Button>
-
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={repairing}
-                      onClick={handleRepairLedger}
-                      className="gap-2 text-xs font-semibold"
-                    >
-                      <Wrench className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                      <span>{repairing ? "Repairing..." : "Repair Demo Ledger"}</span>
-                    </Button>
-                  </div>
-                </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={repairing}
+                        onClick={handleRepairLedger}
+                        className="gap-2 text-xs font-semibold border-violet-400/30 text-violet-300 hover:bg-violet-950/20"
+                      >
+                        <Wrench className="h-4 w-4 text-violet-400" />
+                        <span>{repairing ? "Repairing..." : "Repair Demo Ledger"}</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
             {/* TAB 2: Verification Queue */}
             {activeTab === "kyc" && (
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
-                <div className="border-b border-slate-200 p-4 dark:border-slate-800 flex justify-between items-center">
+              <Card className="p-0 overflow-hidden">
+                <div className="border-b border-white/[0.08] p-4 flex justify-between items-center">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-sm font-bold text-white">
                       User Identity & KYC Queue
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#8b8ea0]">
                       Simulated document compliance verification per SPEC.md Section 5.
                     </p>
                   </div>
@@ -509,8 +513,8 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-[#12131a] font-bold uppercase tracking-wider text-[#8b8ea0]">
                       <tr>
                         <th className="px-4 py-3">User</th>
                         <th className="px-4 py-3">Role</th>
@@ -520,26 +524,26 @@ export default function AdminDashboard() {
                         <th className="px-4 py-3 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y divide-white/[0.06]">
                       {users.map((u) => (
-                        <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                          <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
+                        <tr key={u.id} className="hover:bg-white/[0.02]">
+                          <td className="px-4 py-3 font-semibold text-white">
                             <div>{u.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">{u.email}</div>
+                            <div className="text-[10px] text-[#8b8ea0]">{u.email}</div>
                           </td>
-                          <td className="px-4 py-3 uppercase text-[10px] font-bold text-slate-500">
+                          <td className="px-4 py-3 uppercase text-[10px] font-bold text-[#8b8ea0]">
                             {u.role}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">
+                          <td className="px-4 py-3 font-semibold text-amber-300">
                             ★ {u.stars ? u.stars.toFixed(1) : "—"}
                           </td>
                           <td className="px-4 py-3">
                             {u.newbie_badge ? (
-                              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                              <span className="rounded bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
                                 Newbie
                               </span>
                             ) : (
-                              <span className="rounded bg-teal-100 px-1.5 py-0.5 text-[9px] font-bold text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+                              <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300">
                                 Verified Contributor
                               </span>
                             )}
@@ -548,7 +552,7 @@ export default function AdminDashboard() {
                             {u.is_kyc_verified ? (
                               <Badge variant="success" className="text-[10px]">Verified</Badge>
                             ) : (
-                              <Badge variant="subtle" className="text-[10px] text-slate-500">Unverified</Badge>
+                              <Badge variant="subtle" className="text-[10px] text-[#8b8ea0]">Unverified</Badge>
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -566,18 +570,18 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* TAB 3: Flagged Submissions */}
             {activeTab === "flags" && (
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
-                <div className="border-b border-slate-200 p-4 dark:border-slate-800 flex justify-between items-center">
+              <Card className="p-0 overflow-hidden">
+                <div className="border-b border-white/[0.08] p-4 flex justify-between items-center">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-sm font-bold text-white">
                       Similarity & Integrity Audit Queue
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#8b8ea0]">
                       Submissions exceeding similarity threshold or flagged during peer review.
                     </p>
                   </div>
@@ -587,16 +591,16 @@ export default function AdminDashboard() {
                 </div>
 
                 {flags.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">
+                  <div className="p-8 text-center text-xs text-[#8b8ea0]">
                     No flagged submissions pending audit. Integrity check is clear!
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="divide-y divide-white/[0.06]">
                     {flags.map((f) => (
-                      <div key={f.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 flex flex-col sm:flex-row justify-between gap-4">
+                      <div key={f.id} className="p-4 hover:bg-white/[0.02] flex flex-col sm:flex-row justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-slate-900 dark:text-white">
+                            <span className="font-bold text-xs text-white">
                               {f.title}
                             </span>
                             <Badge variant="warning" className="text-[10px]">
@@ -606,11 +610,11 @@ export default function AdminDashboard() {
                               {f.integrity_status}
                             </Badge>
                           </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-300 font-mono line-clamp-2">
+                          <p className="text-xs text-[#8b8ea0] font-mono line-clamp-2">
                             {f.content}
                           </p>
-                          <div className="text-[10px] text-slate-400">
-                            Author: <strong>{f.author_name}</strong> ({f.author_email}) | Project: {f.project_title}
+                          <div className="text-[10px] text-[#6f6f7b]">
+                            Author: <strong className="text-white">{f.author_name}</strong> ({f.author_email}) | Project: {f.project_title}
                           </div>
                         </div>
 
@@ -619,7 +623,7 @@ export default function AdminDashboard() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleResolveFlag(f.id, "clear")}
-                            className="text-xs text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                            className="text-xs text-emerald-400 hover:bg-emerald-950/30 border-emerald-500/30"
                           >
                             <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                             <span>Clear Flag</span>
@@ -629,7 +633,7 @@ export default function AdminDashboard() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleResolveFlag(f.id, "confirm")}
-                            className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                            className="text-xs text-rose-400 hover:bg-rose-950/30 border-rose-500/30"
                           >
                             <XCircle className="h-3.5 w-3.5 mr-1" />
                             <span>Confirm Violation</span>
@@ -639,18 +643,18 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             )}
 
             {/* TAB 4: Disputes Queue */}
             {activeTab === "disputes" && (
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
-                <div className="border-b border-slate-200 p-4 dark:border-slate-800 flex justify-between items-center">
+              <Card className="p-0 overflow-hidden">
+                <div className="border-b border-white/[0.08] p-4 flex justify-between items-center">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-sm font-bold text-white">
                       Platform Disputes & Mediations
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#8b8ea0]">
                       Escalations for milestone rejection, silent sponsors, and member exit star penalties.
                     </p>
                   </div>
@@ -660,36 +664,36 @@ export default function AdminDashboard() {
                 </div>
 
                 {disputes.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">
+                  <div className="p-8 text-center text-xs text-[#8b8ea0]">
                     No active disputes recorded. All project milestones operating smoothly!
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="divide-y divide-white/[0.06]">
                     {disputes.map((d) => (
-                      <div key={d.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 flex flex-col sm:flex-row justify-between gap-4">
+                      <div key={d.id} className="p-4 hover:bg-white/[0.02] flex flex-col sm:flex-row justify-between gap-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-slate-900 dark:text-white">
+                            <span className="font-bold text-xs text-white">
                               Dispute #{d.id}
                             </span>
                             <Badge variant={d.status === "open" ? "warning" : "success"} className="text-[10px]">
                               {d.status.toUpperCase()}
                             </Badge>
                             {Boolean(d.good_cause_granted) && (
-                              <Badge variant="subtle" className="text-[10px] text-teal-600">
+                              <Badge variant="subtle" className="text-[10px] text-teal-400 border-teal-500/30">
                                 Good Cause Granted
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-slate-700 dark:text-slate-300">
-                            Reason: {d.reason}
+                          <p className="text-xs text-[#8b8ea0]">
+                            Reason: <span className="text-white">{d.reason}</span>
                           </p>
                           {d.resolution_notes && (
-                            <p className="text-xs text-slate-500 italic">
+                            <p className="text-xs text-[#8b8ea0] italic">
                               Resolution: {d.resolution_notes}
                             </p>
                           )}
-                          <div className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-[#6f6f7b]">
                             Initiator: {d.initiator_name || d.initiator_id} | Project: {d.project_title || d.project_id}
                           </div>
                         </div>
@@ -714,18 +718,18 @@ export default function AdminDashboard() {
 
                 {/* Dispute Mediation Dialog */}
                 {selectedDispute && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <Card className="w-full max-w-lg border-white/[0.12] bg-[#0c0d12] p-6 shadow-2xl">
+                      <h4 className="text-sm font-bold text-white">
                         Mediate Dispute #{selectedDispute.id}
                       </h4>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-[#8b8ea0]">
                         Review case details and determine whether a star penalty waiver or good cause exception applies.
                       </p>
 
                       <form onSubmit={handleMediateDispute} className="mt-4 space-y-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <label className="block text-xs font-semibold text-[#8b8ea0]">
                             Resolution Notes
                           </label>
                           <textarea
@@ -733,7 +737,7 @@ export default function AdminDashboard() {
                             onChange={(e) => setMediationNotes(e.target.value)}
                             placeholder="State rationale for mediation decision..."
                             rows={3}
-                            className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                            className="mt-1 w-full rounded-xl border border-white/[0.08] bg-[#12131a] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-violet-400 focus:outline-none"
                             required
                           />
                         </div>
@@ -744,9 +748,9 @@ export default function AdminDashboard() {
                             id="good-cause-checkbox"
                             checked={grantGoodCause}
                             onChange={(e) => setGrantGoodCause(e.target.checked)}
-                            className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                            className="rounded border-white/[0.2] bg-[#12131a] text-violet-500 focus:ring-violet-500"
                           />
-                          <label htmlFor="good-cause-checkbox" className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          <label htmlFor="good-cause-checkbox" className="text-xs font-semibold text-white">
                             Grant Good Cause Exception (Waive or restore 0.5 star penalty)
                           </label>
                         </div>
@@ -764,16 +768,16 @@ export default function AdminDashboard() {
                             type="submit"
                             size="sm"
                             disabled={mediating}
-                            className="bg-teal-600 hover:bg-teal-700 text-white"
+                            className="bg-violet-600 hover:bg-violet-700 text-white"
                           >
                             {mediating ? "Applying..." : "Submit Mediation"}
                           </Button>
                         </div>
                       </form>
-                    </div>
+                    </Card>
                   </div>
                 )}
-              </div>
+              </Card>
             )}
           </div>
         </main>

@@ -180,31 +180,8 @@ def submit_project_review(
     comment = req_data.get("comment", "")
     tags = req_data.get("tags", [])
 
-    # Record ledger entry FIRST to link review directly to hash chain
-    ledger_entry = record_ledger_entry(
-        actor=reviewer_id,
-        on_behalf_of=project_id,
-        action="REVIEW_SUBMITTED",
-        payload={
-            "review_id": rev_id,
-            "project_id": project_id,
-            "reviewer_id": reviewer_id,
-            "reviewee_id": reviewee_id,
-            "quality": float(req_data["quality"]),
-            "timeliness": float(req_data["timeliness"]),
-            "communication": float(req_data["communication"]),
-            "collaboration": float(req_data["collaboration"]),
-            "integrity": float(req_data["integrity"]),
-            "fairness": float(fairness) if fairness is not None else None,
-            "clarity": float(clarity) if clarity is not None else None,
-            "comment": comment,
-            "tags": tags,
-        },
-        conn=conn,
-    )
-    ledger_ref = f"ledger_seq_{ledger_entry['seq']}"
-
     import json
+
     conn.execute(
         """
         INSERT INTO reviews (
@@ -227,7 +204,7 @@ def submit_project_review(
             float(clarity) if clarity is not None else None,
             comment,
             json.dumps(tags),
-            ledger_ref,
+            "",
         ),
     )
 
@@ -238,12 +215,43 @@ def submit_project_review(
         reason=f"Structured review received on closed project '{proj['title']}'",
         project_id=project_id,
     )
+    newbie_removed = bool(star_update.get("graduated_from_newbie", False))
+    new_rating = star_update.get("new_rating")
+
+    # Record ledger entry linked directly to hash chain
+    ledger_entry = record_ledger_entry(
+        actor=reviewer_id,
+        on_behalf_of=project_id,
+        action="REVIEW_SUBMITTED",
+        payload={
+            "review_id": rev_id,
+            "project_id": project_id,
+            "reviewer_id": reviewer_id,
+            "reviewee_id": reviewee_id,
+            "quality": float(req_data["quality"]),
+            "timeliness": float(req_data["timeliness"]),
+            "communication": float(req_data["communication"]),
+            "collaboration": float(req_data["collaboration"]),
+            "integrity": float(req_data["integrity"]),
+            "fairness": float(fairness) if fairness is not None else None,
+            "clarity": float(clarity) if clarity is not None else None,
+            "comment": comment,
+            "tags": tags,
+            "newbie_removed": newbie_removed,
+            "new_rating": new_rating,
+        },
+        conn=conn,
+    )
+    ledger_ref = f"ledger_seq_{ledger_entry['seq']}"
+    conn.execute("UPDATE reviews SET ledger_ref = ? WHERE id = ?", (ledger_ref, rev_id))
 
     return {
         "status": "success",
         "review_id": rev_id,
         "ledger_ref": ledger_ref,
         "ledger_seq": ledger_entry["seq"],
+        "newbie_removed": newbie_removed,
+        "new_rating": new_rating,
         "star_update": star_update,
     }
 

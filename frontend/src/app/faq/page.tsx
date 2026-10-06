@@ -58,57 +58,60 @@ export default function FAQPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 animate-fade-up space-y-10">
-      <div className="text-center space-y-3">
-        <Badge variant="subtle" className="text-xs uppercase font-bold">
-          Knowledge Base
-        </Badge>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
-          Frequently Asked Questions
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          Clear answers on escrow mechanics, cryptographic verification, ratings, and governance.
-        </p>
-      </div>
-
-      <div className="space-y-8">
-        {categories.map((cat, cIdx) => (
-          <div key={cIdx} className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs text-teal-600 dark:text-teal-400">
-              {cat.title}
-            </h2>
-            <div className="space-y-3">
-              {cat.items.map((item, iIdx) => {
-                const globalIdx = cIdx * 10 + iIdx;
-                const isOpen = openIdx === globalIdx;
-                return (
-                  <div
-                    key={iIdx}
-                    className="rounded-2xl border border-slate-200 bg-white transition dark:border-slate-800 dark:bg-slate-900"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpenIdx(isOpen ? null : globalIdx)}
-                      className="flex w-full items-center justify-between p-4 text-left text-sm font-bold text-slate-900 dark:text-white focus:outline-none"
-                    >
-                      <span>{item.q}</span>
-                      <ChevronDown
-                        className={`h-4 w-4 text-slate-400 transition-transform ${
-                          isOpen ? "rotate-180 text-teal-600" : ""
-                        }`}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div className="px-4 pb-4 pt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800">
-                        {item.a}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#050508] text-white py-16 px-4">
+      <div className="mx-auto max-w-4xl animate-fade-up space-y-12">
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 text-xs font-mono text-[#b9a9ff]">
+            <HelpCircle className="h-3.5 w-3.5" />
+            KNOWLEDGE BASE
           </div>
-        ))}
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
+            Clear answers on escrow mechanics, cryptographic verification, ratings, and governance.
+          </p>
+        </div>
+
+        <div className="space-y-8">
+          {categories.map((cat, cIdx) => (
+            <div key={cIdx} className="space-y-3">
+              <h2 className="text-xs font-mono uppercase tracking-wider text-[#b9a9ff] flex items-center gap-2">
+                <span>//</span> {cat.title}
+              </h2>
+              <div className="space-y-3">
+                {cat.items.map((item, iIdx) => {
+                  const globalIdx = cIdx * 10 + iIdx;
+                  const isOpen = openIdx === globalIdx;
+                  return (
+                    <div
+                      key={iIdx}
+                      className="rounded-2xl border border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md transition-all overflow-hidden"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenIdx(isOpen ? null : globalIdx)}
+                        className="flex w-full items-center justify-between p-5 text-left text-sm font-semibold text-white focus:outline-none hover:bg-white/[0.02] transition"
+                      >
+                        <span>{item.q}</span>
+                        <ChevronDown
+                          className={`h-4 w-4 text-zinc-400 transition-transform ${
+                            isOpen ? "rotate-180 text-[#b9a9ff]" : ""
+                          }`}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div className="px-5 pb-5 pt-2 text-xs text-zinc-400 leading-relaxed border-t border-white/[0.04]">
+                          {item.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

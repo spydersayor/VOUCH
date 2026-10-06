@@ -4,27 +4,29 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] cursor-pointer",
   {
     variants: {
       variant: {
         default:
-          "bg-teal-600 text-white shadow-sm hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600",
+          "rounded-full bg-gradient-to-r from-violet-900/60 via-[#181232] to-violet-950/60 text-white border border-violet-400/50 shadow-[0_0_15px_rgba(168,85,247,0.25)] hover:border-violet-300 hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] hover:-translate-y-0.5",
         secondary:
-          "bg-slate-100 text-slate-900 shadow-sm hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
+          "rounded-full bg-white/[0.05] text-[#f3f2ff] border border-white/10 hover:bg-white/[0.09] hover:border-violet-400/40 hover:text-white",
         accent:
-          "bg-rose-500 text-white shadow-sm hover:bg-rose-600 dark:bg-rose-600 dark:hover:bg-rose-700",
+          "rounded-full bg-rose-600/80 text-white border border-rose-400/40 hover:bg-rose-500 hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]",
+        destructive:
+          "rounded-full bg-rose-600/80 text-white border border-rose-400/40 hover:bg-rose-500 hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]",
         outline:
-          "border border-slate-300 bg-transparent hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+          "rounded-full border border-white/15 bg-transparent text-[#f3f2ff] hover:bg-white/[0.05] hover:border-violet-400/50 hover:text-white",
         ghost:
-          "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100",
-        link: "text-teal-600 underline-offset-4 hover:underline dark:text-teal-400",
+          "rounded-lg hover:bg-white/[0.06] text-slate-300 hover:text-white",
+        link: "text-violet-300 underline-offset-4 hover:underline hover:text-violet-200 normal-case font-sans",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-xs",
-        lg: "h-12 rounded-xl px-6 text-base",
-        icon: "h-9 w-9",
+        default: "h-10 px-5 py-2",
+        sm: "h-8 px-3.5 text-[11px]",
+        lg: "h-12 px-7 text-xs tracking-widest",
+        icon: "h-9 w-9 rounded-full",
       },
     },
     defaultVariants: {

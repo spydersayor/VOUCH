@@ -7,23 +7,19 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { RoleSidebar } from "@/components/shell/RoleSidebar";
 import { ProsConsPanel } from "@/components/pros-cons/ProsConsPanel";
 import { apiFetch } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Coins,
   Lock,
-  Unlock,
   Play,
   CheckCircle2,
   AlertTriangle,
   UserPlus,
   Sparkles,
-  FileText,
-  History,
   ShieldCheck,
   Send,
-  PlusCircle,
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -182,10 +178,10 @@ export default function SponsorProjectDetailPage() {
       <RoleGuard allowedRoles={["sponsor", "admin"]}>
         <div className="flex min-h-[calc(100vh-4rem)]">
           <RoleSidebar role="sponsor" />
-          <main className="flex-1 p-8">
+          <main className="flex-1 p-6 sm:p-10">
             <div className="mx-auto max-w-5xl space-y-4">
-              <div className="h-10 w-64 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-              <div className="h-48 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+              <div className="h-10 w-64 animate-pulse rounded-xl bg-white/[0.05]" />
+              <div className="h-48 animate-pulse rounded-2xl border border-white/[0.08] bg-[#0c0d12]" />
             </div>
           </main>
         </div>
@@ -199,7 +195,7 @@ export default function SponsorProjectDetailPage() {
         <div className="flex min-h-[calc(100vh-4rem)]">
           <RoleSidebar role="sponsor" />
           <main className="flex-1 p-12 text-center">
-            <h2 className="text-xl font-bold">Project Not Found</h2>
+            <h2 className="text-xl font-bold text-white">Project Not Found</h2>
             <Button asChild className="mt-4">
               <Link href="/sponsor/projects">Back to Initiatives</Link>
             </Button>
@@ -220,29 +216,29 @@ export default function SponsorProjectDetailPage() {
     <RoleGuard allowedRoles={["sponsor", "admin"]}>
       <div className="flex min-h-[calc(100vh-4rem)]">
         <RoleSidebar role="sponsor" />
-        <main className="flex-1 p-8 animate-fade-up">
+        <main className="flex-1 p-6 sm:p-10 animate-fade-up">
           <div className="mx-auto max-w-5xl space-y-8">
             {/* Header */}
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center border-b border-white/[0.06] pb-6">
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+                  <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                     {project.title}
                   </h1>
-                  <Badge variant="subtle" className="uppercase text-xs">
+                  <Badge variant="subtle" className="font-mono text-[10px] uppercase">
                     {project.engagement_model}
                   </Badge>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="font-mono text-[10px]">
                     {project.sensitivity_label || "Confidential"}
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs text-slate-500 max-w-2xl">
+                <p className="mt-1 text-xs text-[#9d9da8] max-w-2xl leading-relaxed">
                   {project.public_summary}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <Button asChild variant="outline" size="sm" className="text-xs font-bold">
+                <Button asChild variant="outline" size="sm" className="text-xs font-semibold">
                   <Link href={`/charters/${id}`}>
                     <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                     <span>Public Charter View</span>
@@ -252,53 +248,53 @@ export default function SponsorProjectDetailPage() {
             </div>
 
             {/* Step 5: Locker & Escrow Card */}
-            <Card className="border-teal-500/30 bg-gradient-to-br from-teal-50/40 via-white to-slate-50 dark:from-teal-950/20 dark:via-slate-900 dark:to-slate-900 p-6">
+            <Card className="border-[#8f7cff]/30 bg-gradient-to-br from-[#8f7cff]/[0.08] via-[#0c0d12] to-[#050508] p-6 backdrop-blur-md">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#b9a9ff]">
                       Escrow Locker Status
                     </span>
-                    <Badge variant="subtle" className="text-[10px]">GUARANTEED RUPEES</Badge>
+                    <Badge variant="subtle" className="font-mono text-[10px] border-[#8f7cff]/30 bg-[#8f7cff]/10 text-[#b9a9ff]">GUARANTEED RUPEES</Badge>
                   </div>
                   <div className="mt-1 flex items-baseline gap-3">
-                    <span className="text-2xl font-black text-slate-900 dark:text-white">
-                      Rs {fundedAmount.toLocaleString()} Locked
+                    <span className="font-mono text-2xl font-bold text-white">
+                      ₹{fundedAmount.toLocaleString("en-IN")} Locked
                     </span>
-                    <span className="text-xs text-slate-500">
-                      of Rs {totalBudget.toLocaleString()} Total Commitment
+                    <span className="font-mono text-xs text-[#9d9da8]">
+                      of ₹{totalBudget.toLocaleString("en-IN")} Total Commitment
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Button asChild size="sm" variant="outline" className="font-bold text-xs">
+                  <Button asChild size="sm" variant="outline" className="font-semibold text-xs">
                     <Link href="/sponsor/wallet">
-                      <Coins className="mr-1 h-3.5 w-3.5 text-teal-600" />
-                      <span>Wallet (Rs {(wallet?.balance || 0).toLocaleString()})</span>
+                      <Coins className="mr-1.5 h-3.5 w-3.5 text-[#b9a9ff]" />
+                      <span>Wallet (₹{(wallet?.balance || 0).toLocaleString("en-IN")})</span>
                     </Link>
                   </Button>
                 </div>
               </div>
 
               {/* Locker Breakdown Bar */}
-              <div className="mt-4 grid grid-cols-3 gap-4 border-t border-slate-200/60 pt-4 dark:border-slate-800 text-xs">
+              <div className="mt-5 grid grid-cols-3 gap-4 border-t border-white/[0.06] pt-4 text-xs font-mono">
                 <div>
-                  <span className="text-slate-500">Funded in Escrow:</span>
-                  <div className="font-bold text-teal-600 dark:text-teal-400">
-                    Rs {fundedAmount.toLocaleString()}
+                  <span className="text-[#6f6f7b]">Funded in Escrow:</span>
+                  <div className="font-bold text-[#b9a9ff] mt-0.5">
+                    ₹{fundedAmount.toLocaleString("en-IN")}
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-500">Released Payouts:</span>
-                  <div className="font-bold text-emerald-600 dark:text-emerald-400">
-                    Rs {releasedAmount.toLocaleString()}
+                  <span className="text-[#6f6f7b]">Released Payouts:</span>
+                  <div className="font-bold text-emerald-400 mt-0.5">
+                    ₹{releasedAmount.toLocaleString("en-IN")}
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-500">Remaining to Fund:</span>
-                  <div className="font-bold text-slate-700 dark:text-slate-300">
-                    Rs {remainingAmount.toLocaleString()}
+                  <span className="text-[#6f6f7b]">Remaining to Fund:</span>
+                  <div className="font-bold text-white mt-0.5">
+                    ₹{remainingAmount.toLocaleString("en-IN")}
                   </div>
                 </div>
               </div>
@@ -310,7 +306,7 @@ export default function SponsorProjectDetailPage() {
                 <CardTitle className="text-base font-bold">
                   Milestones &amp; Escrow Locking Enforcement
                 </CardTitle>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#9d9da8]">
                   Per platform rule: A funded milestone cannot start before it is locked in escrow.
                 </p>
               </CardHeader>
@@ -321,26 +317,26 @@ export default function SponsorProjectDetailPage() {
                   return (
                     <div
                       key={m.id}
-                      className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center"
+                      className="flex flex-col justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#050508]/80 p-4 sm:flex-row sm:items-center"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <Badge variant="default" className="text-xs">
+                          <Badge variant="default" className="font-mono text-[10px]">
                             M{m.sequence}
                           </Badge>
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                          <h4 className="font-bold text-sm text-white">
                             {m.title}
                           </h4>
                           <Badge
                             variant={isLocked ? "default" : "subtle"}
-                            className="capitalize text-[10px]"
+                            className="capitalize font-mono text-[10px]"
                           >
                             {m.status}
                           </Badge>
                         </div>
-                        <p className="text-xs text-slate-500">{m.description}</p>
-                        <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                          Rs {m.budget.toLocaleString()} Escrow Target
+                        <p className="text-xs text-[#9d9da8]">{m.description}</p>
+                        <div className="font-mono text-xs font-bold text-emerald-400">
+                          ₹{m.budget.toLocaleString("en-IN")} Escrow Target
                         </div>
                       </div>
 
@@ -350,7 +346,7 @@ export default function SponsorProjectDetailPage() {
                             size="sm"
                             disabled={actionLoading === `lock_${m.id}`}
                             onClick={() => handleLockMilestone(m.id, m.budget)}
-                            className="gap-1.5 font-bold text-xs"
+                            className="gap-1.5 font-semibold text-xs"
                           >
                             <Lock className="h-3.5 w-3.5" />
                             <span>{actionLoading === `lock_${m.id}` ? "Locking..." : "Lock in Escrow"}</span>
@@ -360,13 +356,13 @@ export default function SponsorProjectDetailPage() {
                             size="sm"
                             disabled={actionLoading === `start_${m.id}`}
                             onClick={() => handleStartMilestone(m.id)}
-                            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs"
+                            className="gap-1.5 font-semibold text-xs"
                           >
                             <Play className="h-3.5 w-3.5" />
                             <span>{actionLoading === `start_${m.id}` ? "Starting..." : "Start Milestone"}</span>
                           </Button>
                         ) : (
-                          <div className="flex items-center gap-1 text-xs font-bold text-emerald-600">
+                          <div className="flex items-center gap-1.5 font-mono text-xs font-semibold text-emerald-400">
                             <CheckCircle2 className="h-4 w-4" />
                             <span>Active / Funded</span>
                           </div>
@@ -386,11 +382,11 @@ export default function SponsorProjectDetailPage() {
                     <CardTitle className="text-base font-bold">
                       Ranked Matchmaking Candidates
                     </CardTitle>
-                    <Badge variant="subtle" className="text-[10px]">
+                    <Badge variant="subtle" className="font-mono text-[10px] text-[#b9a9ff] border-[#8f7cff]/30 bg-[#8f7cff]/10">
                       5-FACTOR ALGORITHM
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#9d9da8]">
                     Formula: 0.50 skill + 0.25 verified projects + 0.15 stars + 0.10 availability + newbie boost.
                   </p>
                 </div>
@@ -399,15 +395,15 @@ export default function SponsorProjectDetailPage() {
               <CardContent className="space-y-6">
                 {/* Conflict Notice if any */}
                 {matchData?.conflicted_candidates?.length > 0 && (
-                  <div className="rounded-xl border border-amber-500/40 bg-amber-50/40 p-4 dark:bg-amber-950/20">
-                    <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-200">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <div className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4">
+                    <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-amber-300">
+                      <AlertTriangle className="h-4 w-4 text-amber-400" />
                       <span>Excluded Candidates (Declared Conflicts of Interest Logged to Ledger)</span>
                     </div>
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-2.5 space-y-1.5">
                       {matchData.conflicted_candidates.map((c: any) => (
-                        <div key={c.candidate_id} className="text-xs text-slate-600 dark:text-slate-400">
-                          <strong className="text-slate-900 dark:text-slate-100">{c.name}</strong> ({c.role}): {c.conflict_reason}
+                        <div key={c.candidate_id} className="text-xs text-[#9d9da8]">
+                          <strong className="text-white">{c.name}</strong> ({c.role}): {c.conflict_reason}
                         </div>
                       ))}
                     </div>
@@ -416,51 +412,51 @@ export default function SponsorProjectDetailPage() {
 
                 {/* Ranked Students */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Ranked Student Contributors ({matchData?.ranked_students?.length || 0})
                   </h4>
                   <div className="space-y-4">
                     {(matchData?.ranked_students || []).map((cand: any, idx: number) => (
                       <div
                         key={cand.candidate_id}
-                        className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950 space-y-4"
+                        className="rounded-2xl border border-white/[0.08] bg-[#050508]/80 p-5 space-y-4"
                       >
                         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
                               <Badge variant="default" className="text-xs font-mono">
                                 #{idx + 1}
                               </Badge>
-                              <h5 className="font-bold text-base text-slate-900 dark:text-white">
+                              <h5 className="font-bold text-base text-white">
                                 {cand.name}
                               </h5>
                               {cand.is_newbie && (
-                                <Badge variant="subtle" className="text-[10px] text-teal-700">
+                                <Badge variant="subtle" className="font-mono text-[10px] text-[#b9a9ff] border-[#8f7cff]/30 bg-[#8f7cff]/10">
                                   Newbie Boost
                                 </Badge>
                               )}
                               {cand.stars && (
-                                <span className="text-xs font-bold text-amber-600">
+                                <span className="font-mono text-xs font-bold text-amber-400">
                                   {cand.stars}⭐
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-500">{cand.headline}</p>
-                            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                              <strong>Why Ranked #{idx + 1}:</strong> {cand.reason_summary}
+                            <p className="text-xs text-[#9d9da8]">{cand.headline}</p>
+                            <p className="text-xs text-white/90">
+                              <strong className="text-[#b9a9ff]">Why Ranked #{idx + 1}:</strong> {cand.reason_summary}
                             </p>
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            <div className="flex items-center gap-1.5 rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-teal-800 dark:text-teal-200">
-                              <Sparkles className="h-3.5 w-3.5 text-teal-600" />
-                              <span className="text-sm font-black">{cand.score_pct}% Fit</span>
+                            <div className="flex items-center gap-1.5 rounded-xl border border-[#8f7cff]/30 bg-[#8f7cff]/10 px-3 py-1 text-[#b9a9ff] font-mono text-xs font-bold">
+                              <Sparkles className="h-3.5 w-3.5" />
+                              <span>{cand.score_pct}% Fit</span>
                             </div>
                             <Button
                               size="sm"
                               disabled={actionLoading === `invite_${cand.candidate_id}`}
                               onClick={() => handleInvite(cand.candidate_id, "student")}
-                              className="gap-1 font-bold text-xs"
+                              className="gap-1.5 font-semibold text-xs"
                             >
                               <UserPlus className="h-3.5 w-3.5" />
                               <span>{actionLoading === `invite_${cand.candidate_id}` ? "Inviting..." : "Invite Contributor"}</span>
@@ -485,45 +481,45 @@ export default function SponsorProjectDetailPage() {
 
                 {/* Ranked Experts */}
                 <div className="space-y-3 pt-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Ranked Expert Advisors ({matchData?.ranked_experts?.length || 0})
                   </h4>
                   <div className="space-y-4">
                     {(matchData?.ranked_experts || []).map((cand: any, idx: number) => (
                       <div
                         key={cand.candidate_id}
-                        className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950 space-y-4"
+                        className="rounded-2xl border border-white/[0.08] bg-[#050508]/80 p-5 space-y-4"
                       >
                         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
                               <Badge variant="default" className="text-xs font-mono">
                                 Advisor #{idx + 1}
                               </Badge>
-                              <h5 className="font-bold text-base text-slate-900 dark:text-white">
+                              <h5 className="font-bold text-base text-white">
                                 {cand.name}
                               </h5>
                               {cand.stars && (
-                                <span className="text-xs font-bold text-amber-600">
+                                <span className="font-mono text-xs font-bold text-amber-400">
                                   {cand.stars}⭐
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-slate-500">{cand.headline}</p>
-                            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                              <strong>Advisory Fit:</strong> {cand.reason_summary}
+                            <p className="text-xs text-[#9d9da8]">{cand.headline}</p>
+                            <p className="text-xs text-white/90">
+                              <strong className="text-[#b9a9ff]">Advisory Fit:</strong> {cand.reason_summary}
                             </p>
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            <div className="flex items-center gap-1.5 rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-teal-800 dark:text-teal-200">
-                              <span className="text-sm font-black">{cand.score_pct}% Fit</span>
+                            <div className="flex items-center gap-1.5 rounded-xl border border-[#8f7cff]/30 bg-[#8f7cff]/10 px-3 py-1 text-[#b9a9ff] font-mono text-xs font-bold">
+                              <span>{cand.score_pct}% Fit</span>
                             </div>
                             <Button
                               size="sm"
                               disabled={actionLoading === `invite_${cand.candidate_id}`}
                               onClick={() => handleInvite(cand.candidate_id, "expert")}
-                              className="gap-1 font-bold text-xs"
+                              className="gap-1.5 font-semibold text-xs"
                             >
                               <UserPlus className="h-3.5 w-3.5" />
                               <span>{actionLoading === `invite_${cand.candidate_id}` ? "Inviting..." : "Invite as Lead Expert"}</span>
@@ -555,7 +551,7 @@ export default function SponsorProjectDetailPage() {
                   <CardTitle className="text-base font-bold">
                     Charter Governance &amp; Version History (v{charter?.version || 1})
                   </CardTitle>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#9d9da8]">
                     Updating any clause creates an incremented version and requires contributors to re-accept terms before accessing the brief.
                   </p>
                 </div>
@@ -563,7 +559,7 @@ export default function SponsorProjectDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowCharterEdit(!showCharterEdit)}
-                  className="font-bold text-xs"
+                  className="font-semibold text-xs"
                 >
                   {showCharterEdit ? "Cancel Editing" : "Edit & Publish New Version"}
                 </Button>
@@ -571,61 +567,61 @@ export default function SponsorProjectDetailPage() {
 
               <CardContent className="space-y-4">
                 {showCharterEdit ? (
-                  <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                  <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#050508]/80 p-4">
                     <div>
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                         Scope of Work
                       </label>
                       <textarea
                         rows={2}
                         value={newScope}
                         onChange={(e) => setNewScope(e.target.value)}
-                        className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                        className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                           IP Clause
                         </label>
                         <textarea
                           rows={2}
                           value={newIpClause}
                           onChange={(e) => setNewIpClause(e.target.value)}
-                          className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                          className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                           Confidentiality Clause
                         </label>
                         <textarea
                           rows={2}
                           value={newConfidentiality}
                           onChange={(e) => setNewConfidentiality(e.target.value)}
-                          className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                          className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                           Exit Terms
                         </label>
                         <textarea
                           rows={2}
                           value={newExitTerms}
                           onChange={(e) => setNewExitTerms(e.target.value)}
-                          className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                          className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                           Commercialisation Clause
                         </label>
                         <textarea
                           rows={2}
                           value={newCommercialisation}
                           onChange={(e) => setNewCommercialisation(e.target.value)}
-                          className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                          className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                         />
                       </div>
                     </div>
@@ -634,7 +630,7 @@ export default function SponsorProjectDetailPage() {
                         size="sm"
                         disabled={publishingCharter}
                         onClick={handlePublishCharter}
-                        className="gap-1.5 font-bold"
+                        className="gap-1.5 font-semibold"
                       >
                         <Send className="h-3.5 w-3.5" />
                         <span>{publishingCharter ? "Publishing..." : `Publish Charter v${(charter?.version || 1) + 1}`}</span>
@@ -643,13 +639,13 @@ export default function SponsorProjectDetailPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs">
-                    <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-900/50">
-                      <span className="font-bold text-slate-700 dark:text-slate-300">Current Scope:</span>
-                      <p className="mt-1 text-slate-600 dark:text-slate-400">{charter?.scope}</p>
+                    <div className="rounded-xl border border-white/[0.08] bg-[#050508]/80 p-3.5">
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#9d9da8]">Current Scope:</span>
+                      <p className="mt-1 text-white/90 leading-relaxed">{charter?.scope}</p>
                     </div>
-                    <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-900/50">
-                      <span className="font-bold text-slate-700 dark:text-slate-300">IP Terms:</span>
-                      <p className="mt-1 text-slate-600 dark:text-slate-400">{charter?.ip_clause}</p>
+                    <div className="rounded-xl border border-white/[0.08] bg-[#050508]/80 p-3.5">
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#9d9da8]">IP Terms:</span>
+                      <p className="mt-1 text-white/90 leading-relaxed">{charter?.ip_clause}</p>
                     </div>
                   </div>
                 )}
@@ -660,35 +656,35 @@ export default function SponsorProjectDetailPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
                   <CardTitle className="text-base font-bold">
                     Project Ledger Activity Stream
                   </CardTitle>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#9d9da8]">
                   Every milestone, charter revision, top-up, application, and payout is cryptographically chained.
                 </p>
               </CardHeader>
               <CardContent className="space-y-2">
                 {activity.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic">No ledger entries recorded yet.</p>
+                  <p className="font-mono text-xs text-[#6f6f7b] italic">No ledger entries recorded yet.</p>
                 ) : (
                   activity.map((act) => (
                     <div
                       key={act.seq}
-                      className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 p-2.5 text-xs dark:border-slate-800 dark:bg-slate-900/40"
+                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#050508]/80 p-3 text-xs"
                     >
                       <div className="flex items-center gap-2">
                         <Badge variant="subtle" className="font-mono text-[10px]">
                           #{act.seq}
                         </Badge>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">
+                        <span className="font-bold text-white">
                           {act.action}
                         </span>
-                        <span className="text-slate-400">•</span>
-                        <span className="text-slate-500 font-mono text-[11px]">{act.actor}</span>
+                        <span className="text-[#6f6f7b]">•</span>
+                        <span className="text-[#9d9da8] font-mono text-[11px]">{act.actor}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">
+                      <div className="text-[10px] text-[#6f6f7b] font-mono">
                         {act.timestamp}
                       </div>
                     </div>

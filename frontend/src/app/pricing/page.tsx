@@ -47,7 +47,6 @@ export default function PricingPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const calculateSplit = async (amtVal: number, expert: boolean) => {
-    // If input is not a positive integer, do not crash; retain fallback/worked example
     if (!amtVal || isNaN(amtVal) || amtVal <= 0) {
       setCalculation(WORKED_EXAMPLE);
       return;
@@ -113,38 +112,29 @@ export default function PricingPage() {
     const val = e.target.value;
     setRawAmount(val);
 
-    if (val.trim() === "") {
-      setValidationError("Please enter a project escrow amount (minimum ₹1,000).");
+    const parsed = parseInt(val, 10);
+    if (!val || isNaN(parsed) || parsed <= 0) {
+      setValidationError("Please enter a valid positive rupee amount.");
+      setCalculation(WORKED_EXAMPLE);
       return;
     }
 
-    const num = Number(val);
-    if (isNaN(num) || num <= 0) {
-      setValidationError("Please enter a valid numeric rupee amount.");
-      return;
-    }
-
-    if (num < 1000) {
-      setValidationError("Milestone budget must be at least ₹1,000.");
-    } else if (num > 100000000) {
-      setValidationError("Milestone budget cannot exceed ₹10,00,00,000.");
+    if (parsed < 1000) {
+      setValidationError("Minimum project escrow is ₹1,000.");
+    } else if (parsed > 100000000) {
+      setValidationError("Maximum project escrow is ₹10,00,00,000.");
     } else {
       setValidationError(null);
     }
-  };
 
-  useEffect(() => {
-    const num = Number(rawAmount);
-    if (!isNaN(num) && num >= 1000) {
-      calculateSplit(num, expertPresent);
-    }
-  }, [rawAmount, expertPresent]);
+    calculateSplit(parsed, expertPresent);
+  };
 
   const activeCalc = calculation || WORKED_EXAMPLE;
   const platformFee = activeCalc.platform_fee ?? WORKED_EXAMPLE.platform_fee;
   const aiReserve = activeCalc.ai_reserve ?? activeCalc.ai_compute_reserve ?? WORKED_EXAMPLE.ai_reserve;
   const expertPayout = activeCalc.expert_payout ?? WORKED_EXAMPLE.expert_payout;
-  const studentPayouts = (activeCalc.student_payouts && activeCalc.student_payouts.length >= 3)
+  const studentPayouts = Array.isArray(activeCalc.student_payouts) && activeCalc.student_payouts.length > 0
     ? activeCalc.student_payouts
     : WORKED_EXAMPLE.student_payouts;
   const totalDisbursed = activeCalc.total_distributed ?? activeCalc.total_disbursed ?? WORKED_EXAMPLE.total_distributed;
@@ -152,128 +142,147 @@ export default function PricingPage() {
 
   return (
     <SectionErrorBoundary sectionName="PricingPage">
-      <div className="mx-auto max-w-5xl px-4 py-12 animate-fade-up space-y-12">
+      <div className="mx-auto max-w-5xl px-4 py-16 animate-fade-up space-y-16">
         {/* Header */}
-        <div className="text-center space-y-3">
-          <Badge variant="subtle" className="text-xs uppercase font-bold">
-            Transparent Economics
-          </Badge>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
-            Pricing & Payout Math
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_#c4b5fd]" />
+            <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-violet-300 font-semibold">
+              TRANSPARENT ECONOMICS
+            </span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-extralight tracking-tight text-white">
+            Pricing &{" "}
+            <span className="text-violet-300 font-light drop-shadow-[0_0_20px_rgba(168,85,247,0.7)]">
+              Split Math
+            </span>
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Deterministic, integer-rupee reward distribution. No hidden deductions, no arbitrary withholding, and zero rounding leaks.
+          <p className="text-sm sm:text-base text-[#8b8ea0] max-w-xl mx-auto font-light leading-relaxed">
+            Deterministic, integer-rupee reward distribution. No hidden deductions, no arbitrary withholding, and 0% platform fee on student payouts.
           </p>
         </div>
 
-        {/* Fee Model Cards */}
+        {/* 3 Split Pillar Cards */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          <Card className="border-t-4 border-t-slate-800 dark:border-t-slate-200">
-            <CardHeader>
-              <Badge variant="subtle" className="w-fit">PLATFORM</Badge>
-              <CardTitle className="text-2xl font-black">10%</CardTitle>
-              <CardDescription>Platform Infrastructure Fee</CardDescription>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400">
-              Covers cryptographic ledger auditing, identity verification, dispute mediation desk, and workspace hosting.
-            </CardContent>
+          <Card className="p-7 space-y-3">
+            <span className="font-mono text-[10px] tracking-widest uppercase text-slate-400 font-semibold">
+              PLATFORM ESCROW
+            </span>
+            <div className="text-4xl font-extralight text-white font-mono">
+              10%
+            </div>
+            <h3 className="text-sm font-semibold text-violet-300">
+              Infrastructure Fee
+            </h3>
+            <p className="text-xs text-slate-400 font-light leading-relaxed">
+              Covers cryptographic SHA-256 auditing, KYC verification, dispute mediation desk, and workspace hosting.
+            </p>
           </Card>
 
-          <Card className="border-t-4 border-t-teal-600">
-            <CardHeader>
-              <Badge variant="default" className="w-fit">RESERVE</Badge>
-              <CardTitle className="text-2xl font-black">5%</CardTitle>
-              <CardDescription>AI Compute & Tooling Reserve</CardDescription>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400">
+          <Card className="p-7 space-y-3">
+            <span className="font-mono text-[10px] tracking-widest uppercase text-violet-400 font-semibold">
+              AI RESERVE POOL
+            </span>
+            <div className="text-4xl font-extralight text-violet-300 font-mono">
+              5%
+            </div>
+            <h3 className="text-sm font-semibold text-violet-200">
+              Compute & Tooling Fund
+            </h3>
+            <p className="text-xs text-slate-400 font-light leading-relaxed">
               Pre-funds shared GPU inference, similarity shingle embeddings, and model compilation tools for project contributors.
-            </CardContent>
+            </p>
           </Card>
 
-          <Card className="border-t-4 border-t-emerald-600">
-            <CardHeader>
-              <Badge variant="verified" className="w-fit">CONTRIBUTORS</Badge>
-              <CardTitle className="text-2xl font-black">85%</CardTitle>
-              <CardDescription>Direct Contributor Pool</CardDescription>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400">
-              Split 30% to lead expert advisors and 70% to student squads with hybrid equal + weighted contribution splits.
-            </CardContent>
+          <Card className="p-7 space-y-3 border-emerald-500/30 bg-[#0c1318]/90">
+            <span className="font-mono text-[10px] tracking-widest uppercase text-emerald-400 font-semibold">
+              TALENT & SQUADS
+            </span>
+            <div className="text-4xl font-extralight text-emerald-300 font-mono">
+              85%
+            </div>
+            <h3 className="text-sm font-semibold text-emerald-200">
+              Direct Contributor Pool
+            </h3>
+            <p className="text-xs text-slate-400 font-light leading-relaxed">
+              Split 30% to lead expert mentors and 70% to student squads with hybrid equal + weighted contribution splits.
+            </p>
           </Card>
         </div>
 
         {/* Interactive Calculator */}
-        <Card className="shadow-lg border-teal-200 dark:border-teal-900">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-600 text-white">
-                  <Calculator className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Interactive Payout Split Simulator</CardTitle>
-                  <CardDescription>
-                    Try the official ₹1,00,000 benchmark example or test a custom project budget:
-                  </CardDescription>
-                </div>
-              </div>
+        <Card className="p-8 sm:p-10 space-y-8 relative overflow-hidden">
+          <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
 
-              {/* Quick preset buttons */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  id="btn-preset-default"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setRawAmount("100000");
-                    setValidationError(null);
-                    calculateSplit(100000, expertPresent);
-                  }}
-                  className="text-xs"
-                >
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  ₹1,00,000 Standard
-                </Button>
-                <Button
-                  id="btn-preset-50k"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setRawAmount("50000");
-                    setValidationError(null);
-                    calculateSplit(50000, expertPresent);
-                  }}
-                  className="text-xs"
-                >
-                  ₹50,000
-                </Button>
-                <Button
-                  id="btn-preset-250k"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setRawAmount("250000");
-                    setValidationError(null);
-                    calculateSplit(250000, expertPresent);
-                  }}
-                  className="text-xs"
-                >
-                  ₹2,50,000
-                </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-950/60 border border-violet-400/40 text-violet-300">
+                <Calculator className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-light text-white">Interactive Payout Split Simulator</h2>
+                <p className="text-xs text-[#8b8ea0] font-mono">
+                  Test custom project budgets with zero rounding leakage:
+                </p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+
+            {/* Quick preset buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                id="btn-preset-default"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setRawAmount("100000");
+                  setValidationError(null);
+                  calculateSplit(100000, expertPresent);
+                }}
+                className="font-mono text-[11px]"
+              >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                ₹1,00,000 Standard
+              </Button>
+              <Button
+                id="btn-preset-50k"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setRawAmount("50000");
+                  setValidationError(null);
+                  calculateSplit(50000, expertPresent);
+                }}
+                className="font-mono text-[11px]"
+              >
+                ₹50,000
+              </Button>
+              <Button
+                id="btn-preset-250k"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setRawAmount("250000");
+                  setValidationError(null);
+                  calculateSplit(250000, expertPresent);
+                }}
+                className="font-mono text-[11px]"
+              >
+                ₹2,50,000
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex-1 space-y-1.5">
+              <div className="flex-1 space-y-2">
                 <label
                   htmlFor="escrow-amount-input"
-                  className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                  className="font-mono text-[10px] uppercase tracking-widest text-[#8b8ea0] font-semibold"
                 >
                   Project Escrow Amount (Integer Rupees)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-2.5 font-bold text-slate-400">₹</span>
+                  <span className="absolute left-3.5 top-2.5 font-bold text-slate-400 font-mono">₹</span>
                   <Input
                     id="escrow-amount-input"
                     type="number"
@@ -281,20 +290,24 @@ export default function PricingPage() {
                     step="1000"
                     value={rawAmount}
                     onChange={handleAmountChange}
-                    className="pl-8 font-mono font-bold"
+                    className="pl-8 font-mono text-base font-semibold"
                     placeholder="100000"
                   />
                 </div>
               </div>
 
               <div className="sm:pt-6">
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-2.5 text-xs font-mono text-slate-300 cursor-pointer p-3 rounded-xl border border-white/[0.08] bg-white/[0.02]">
                   <input
                     id="expert-toggle-checkbox"
                     type="checkbox"
                     checked={expertPresent}
-                    onChange={(e) => setExpertPresent(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                    onChange={(e) => {
+                      setExpertPresent(e.target.checked);
+                      const parsed = parseInt(rawAmount, 10);
+                      if (!isNaN(parsed)) calculateSplit(parsed, e.target.checked);
+                    }}
+                    className="h-4 w-4 rounded border-white/20 text-violet-600 focus:ring-violet-500 bg-[#050508]"
                   />
                   <span>Include Lead Expert (30% net share)</span>
                 </label>
@@ -303,46 +316,62 @@ export default function PricingPage() {
 
             {/* Validation warning */}
             {validationError && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+              <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-3 text-xs font-mono text-amber-300 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
                 <span>{validationError} Using benchmark ₹1,00,000 for preview.</span>
               </div>
             )}
 
+            {/* Stacked Visualizer Bar */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span>RECONCILED ESCROW SPLIT</span>
+                <span className="text-emerald-400 font-bold">100% RECONCILED</span>
+              </div>
+              <div className="h-3 w-full rounded-full overflow-hidden flex bg-[#050508] border border-white/10 p-[1px]">
+                <div style={{ width: "10%" }} className="bg-slate-600 h-full" title="Platform Fee: 10%" />
+                <div style={{ width: "5%" }} className="bg-violet-600 h-full" title="AI Reserve: 5%" />
+                {expertPresent && (
+                  <div style={{ width: "25.5%" }} className="bg-purple-500 h-full" title="Lead Expert: 25.5%" />
+                )}
+                <div style={{ width: expertPresent ? "59.5%" : "85%" }} className="bg-emerald-500 h-full" title="Students Pool" />
+              </div>
+            </div>
+
             {/* Results Table */}
-            <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#050508] p-5">
+              <table className="w-full text-left text-xs font-mono">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 font-bold text-slate-500">
-                    <th className="py-2.5">Stakeholder</th>
-                    <th className="py-2.5">Calculation Rule</th>
-                    <th className="py-2.5 text-right">Exact Rupee Payout</th>
+                  <tr className="border-b border-white/[0.08] text-slate-500 uppercase tracking-wider text-[10px]">
+                    <th className="py-3">Stakeholder</th>
+                    <th className="py-3">Calculation Rule</th>
+                    <th className="py-3 text-right">Exact Rupee Payout</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-white/[0.04] text-slate-300">
                   <tr>
-                    <td className="py-2.5 font-semibold">Platform Fee</td>
-                    <td className="py-2.5 text-slate-500">10% fixed platform cut</td>
-                    <td className="py-2.5 text-right font-mono font-bold">
+                    <td className="py-3 font-semibold text-white">Platform Fee</td>
+                    <td className="py-3 text-slate-400">10% fixed infrastructure cut</td>
+                    <td className="py-3 text-right font-bold text-white">
                       ₹{platformFee.toLocaleString("en-IN")}
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-2.5 font-semibold">AI Compute Reserve</td>
-                    <td className="py-2.5 text-slate-500">5% fixed GPU compute fund</td>
-                    <td className="py-2.5 text-right font-mono font-bold">
+                    <td className="py-3 font-semibold text-white">AI Compute Reserve</td>
+                    <td className="py-3 text-slate-400">5% fixed GPU compute fund</td>
+                    <td className="py-3 text-right font-bold text-violet-300">
                       ₹{aiReserve.toLocaleString("en-IN")}
                     </td>
                   </tr>
                   {expertPresent && (
-                    <tr className="bg-teal-50/40 dark:bg-teal-950/20">
-                      <td className="py-2.5 font-bold text-teal-900 dark:text-teal-200">
+                    <tr className="bg-violet-950/20">
+                      <td className="py-3 font-bold text-violet-200">
                         Lead Expert Advisor
                       </td>
-                      <td className="py-2.5 text-teal-700 dark:text-teal-300">
-                        30% of ₹{netPool.toLocaleString("en-IN")} net
+                      <td className="py-3 text-violet-300/80">
+                        30% of ₹{netPool.toLocaleString("en-IN")} net pool
                       </td>
-                      <td className="py-2.5 text-right font-mono font-black text-teal-700 dark:text-teal-300">
+                      <td className="py-3 text-right font-black text-violet-300">
                         ₹{expertPayout.toLocaleString("en-IN")}
                       </td>
                     </tr>
@@ -352,13 +381,13 @@ export default function PricingPage() {
                     const roles = ["Lead Developer", "Model Architect", "QA & Edge Deployment"];
                     return (
                       <tr key={idx}>
-                        <td className="py-2.5 font-semibold">
+                        <td className="py-3 font-semibold text-emerald-300">
                           Student {idx + 1} ({roles[idx] || `Contributor ${idx + 1}`})
                         </td>
-                        <td className="py-2.5 text-slate-500">
+                        <td className="py-3 text-slate-400">
                           Weight {weights[idx] ?? 0.33} (40% equal + 60% weighted share)
                         </td>
-                        <td className="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                        <td className="py-3 text-right font-bold text-emerald-400">
                           ₹{(stAmt ?? 0).toLocaleString("en-IN")}
                         </td>
                       </tr>
@@ -366,12 +395,12 @@ export default function PricingPage() {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-slate-300 dark:border-slate-700 font-bold text-sm">
-                    <td className="pt-3">Total Reconciled Sum</td>
-                    <td className="pt-3 text-xs text-slate-500">
-                      Sum of parts matches initial escrow exactly
+                  <tr className="border-t border-white/20 font-bold text-sm">
+                    <td className="pt-4 text-white">Total Disbursed Sum</td>
+                    <td className="pt-4 text-xs text-slate-500">
+                      Zero rounding leak guarantee
                     </td>
-                    <td className="pt-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                    <td className="pt-4 text-right font-mono text-emerald-400 text-base">
                       ₹{totalDisbursed.toLocaleString("en-IN")}
                     </td>
                   </tr>
@@ -379,17 +408,17 @@ export default function PricingPage() {
               </table>
             </div>
 
-            {/* Worked Example Callout */}
-            <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-4 text-xs text-teal-900 dark:border-teal-900 dark:bg-teal-950/40 dark:text-teal-200 flex items-start gap-2.5">
-              <Info className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
+            {/* Benchmark Callout */}
+            <div className="rounded-xl border border-violet-400/30 bg-violet-950/20 p-4 text-xs font-mono text-slate-300 flex items-start gap-3">
+              <Info className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
               <div>
-                <strong>SPEC Section 8 Worked Benchmark:</strong> For a standard ₹1,00,000 project: Platform fee is{" "}
-                <strong>₹10,000</strong>; AI compute reserve is <strong>₹5,000</strong>; Expert receives{" "}
-                <strong>₹25,500</strong>; Students receive <strong>₹25,783</strong>, <strong>₹18,643</strong>, and{" "}
-                <strong>₹15,074</strong>, perfectly summing to <strong>₹1,00,000</strong> with zero rounding leak.
+                <strong className="text-white">SPEC Section 8 Worked Benchmark:</strong> For a standard ₹1,00,000 project: Platform fee is{" "}
+                <strong className="text-white">₹10,000</strong>; AI compute reserve is <strong className="text-white">₹5,000</strong>; Expert receives{" "}
+                <strong className="text-violet-300">₹25,500</strong>; Students receive <strong className="text-emerald-300">₹25,783</strong>, <strong className="text-emerald-300">₹18,643</strong>, and{" "}
+                <strong className="text-emerald-300">₹15,074</strong>, perfectly summing to <strong className="text-white">₹1,00,000</strong> without a single rupee lost.
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
     </SectionErrorBoundary>

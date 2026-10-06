@@ -36,31 +36,31 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12 animate-fade-up">
+    <div className="mx-auto max-w-md px-4 py-16 sm:py-24 animate-fade-up">
       <Card>
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-[#b9a9ff]">
             <KeyRound className="h-6 w-6" />
           </div>
-          <CardTitle>Reset Your Password</CardTitle>
+          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
           <CardDescription>
             Enter your email to receive a password reset token (displayed on-screen in demo mode).
           </CardDescription>
         </CardHeader>
         <CardContent>
           {demoToken ? (
-            <div className="space-y-4 rounded-2xl border border-teal-200 bg-teal-50/80 p-5 text-center text-xs dark:border-teal-900 dark:bg-teal-950/40">
-              <ShieldCheck className="mx-auto h-7 w-7 text-teal-600 dark:text-teal-400" />
-              <h4 className="font-bold text-sm text-teal-900 dark:text-teal-100">
+            <div className="space-y-4 rounded-2xl border border-[#8f7cff]/30 bg-[#8f7cff]/[0.08] p-5 text-center text-xs backdrop-blur-md">
+              <ShieldCheck className="mx-auto h-7 w-7 text-[#b9a9ff]" />
+              <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-white">
                 Demo Reset Token Generated
               </h4>
-              <p className="text-slate-600 dark:text-slate-300">
+              <p className="text-[#9d9da8]">
                 In this local synthetic sandbox, use the token below to set your new password:
               </p>
-              <div className="rounded-xl border border-teal-300 bg-white p-3 font-mono text-sm font-bold text-teal-800 dark:border-teal-800 dark:bg-slate-900 dark:text-teal-300 select-all">
+              <div className="rounded-xl border border-white/[0.12] bg-[#0c0d12] p-3 font-mono text-sm font-bold text-[#b9a9ff] select-all">
                 {demoToken}
               </div>
-              <Button asChild className="w-full font-bold">
+              <Button asChild className="w-full font-semibold">
                 <Link
                   href={`/reset-password?token=${demoToken}`}
                   className="flex items-center justify-center gap-2"
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                   Email Address
                 </label>
                 <Input
@@ -89,15 +89,15 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 variant="default"
                 disabled={loading}
-                className="w-full font-bold"
+                className="w-full font-semibold h-11"
               >
                 {loading ? "Generating Token..." : "Generate Reset Token"}
               </Button>
 
-              <div className="text-center text-xs text-slate-500 pt-2">
+              <div className="text-center font-mono text-xs text-[#9d9da8] pt-2">
                 Remember your password?{" "}
-                <Link href="/login" className="text-teal-600 hover:underline dark:text-teal-400 font-bold">
-                  Back to Log In
+                <Link href="/login" className="text-[#b9a9ff] hover:text-white hover:underline transition-colors">
+                  Back to Log In →
                 </Link>
               </div>
             </form>

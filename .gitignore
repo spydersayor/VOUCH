@@ -6,3 +6,9 @@ __pycache__/
 node_modules/
 .next/
 dist/
+
+venv/
+node_modules/
+.next/
+vouch.db
+__pycache__/

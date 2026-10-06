@@ -40,10 +40,10 @@ function ResetPasswordForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-[#b9a9ff]">
           <Lock className="h-6 w-6" />
         </div>
-        <CardTitle>Set New Password</CardTitle>
+        <CardTitle className="text-2xl">Set New Password</CardTitle>
         <CardDescription>
           Enter your reset token and your new account password.
         </CardDescription>
@@ -51,18 +51,18 @@ function ResetPasswordForm() {
       <CardContent>
         {success ? (
           <div className="space-y-4 text-center text-xs">
-            <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-            <p className="font-bold text-slate-800 dark:text-slate-200">
+            <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-400" />
+            <p className="font-semibold text-white">
               Password updated successfully!
             </p>
-            <Button asChild className="w-full font-bold">
-              <Link href="/login">Continue to Log In</Link>
+            <Button asChild className="w-full font-semibold h-11">
+              <Link href="/login">Continue to Log In →</Link>
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                 Reset Token
               </label>
               <Input
@@ -75,7 +75,7 @@ function ResetPasswordForm() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                 New Password
               </label>
               <Input
@@ -91,7 +91,7 @@ function ResetPasswordForm() {
               type="submit"
               variant="default"
               disabled={loading}
-              className="w-full font-bold"
+              className="w-full font-semibold h-11"
             >
               {loading ? "Updating Password..." : "Update Password"}
             </Button>
@@ -104,8 +104,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="mx-auto max-w-md px-4 py-12 animate-fade-up">
-      <Suspense fallback={<div className="p-8 text-center text-xs">Loading reset form...</div>}>
+    <div className="mx-auto max-w-md px-4 py-16 sm:py-24 animate-fade-up">
+      <Suspense fallback={<div className="p-8 text-center font-mono text-xs text-[#9d9da8]">Loading reset form...</div>}>
         <ResetPasswordForm />
       </Suspense>
     </div>

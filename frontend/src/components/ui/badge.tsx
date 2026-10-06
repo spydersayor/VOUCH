@@ -3,26 +3,32 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider transition-colors",
+  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-[0.16em] transition-colors border",
   {
     variants: {
       variant: {
         default:
-          "bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300 border border-teal-200 dark:border-teal-700",
+          "bg-violet-950/40 text-violet-300 border-violet-400/30 shadow-[0_0_10px_rgba(168,85,247,0.15)]",
         newbie:
-          "bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300 border border-sky-200 dark:border-sky-700",
+          "bg-sky-950/40 text-sky-300 border-sky-400/30",
         verified:
-          "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700",
+          "bg-emerald-950/40 text-emerald-300 border-emerald-400/40 shadow-[0_0_10px_rgba(16,185,129,0.15)]",
         flagged:
-          "bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-700",
+          "bg-rose-950/50 text-rose-300 border-rose-400/40 shadow-[0_0_10px_rgba(244,63,94,0.15)]",
         gold:
-          "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-200 dark:border-amber-700",
+          "bg-amber-950/40 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]",
         warning:
-          "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-200 dark:border-amber-700",
+          "bg-amber-950/40 text-amber-300 border-amber-400/30",
+        success:
+          "bg-emerald-950/40 text-emerald-300 border-emerald-400/40 shadow-[0_0_10px_rgba(16,185,129,0.15)]",
+        destructive:
+          "bg-rose-950/50 text-rose-300 border-rose-400/40 shadow-[0_0_10px_rgba(244,63,94,0.15)]",
+        teal:
+          "bg-teal-950/40 text-teal-300 border-teal-400/30",
         outline:
-          "border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 bg-transparent",
+          "border-white/15 text-slate-300 bg-transparent hover:border-violet-400/40",
         subtle:
-          "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700",
+          "bg-white/[0.04] text-slate-400 border-white/[0.08]",
       },
     },
     defaultVariants: {

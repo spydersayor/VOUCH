@@ -8,16 +8,13 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sparkles,
   PlusCircle,
   Trash2,
-  FileText,
   Lock,
-  Coins,
   Send,
-  ArrowRight,
-  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -217,14 +214,14 @@ export default function PostProblemPage() {
     <RoleGuard allowedRoles={["sponsor", "admin"]}>
       <div className="flex min-h-[calc(100vh-4rem)]">
         <RoleSidebar role="sponsor" />
-        <main className="flex-1 p-8 animate-fade-up">
+        <main className="flex-1 p-6 sm:p-10 animate-fade-up">
           <div className="mx-auto max-w-5xl space-y-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.06] pb-6">
               <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+                <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                   Post an Industrial Challenge
                 </h1>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-xs sm:text-sm text-[#9d9da8]">
                   Define technical objectives, scope milestones with AI, and publish an initial charter agreement.
                 </p>
               </div>
@@ -233,9 +230,9 @@ export default function PostProblemPage() {
                 variant="outline"
                 onClick={handleAiScope}
                 disabled={scoping}
-                className="gap-2 border-teal-500/40 text-teal-700 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-teal-950 font-bold"
+                className="gap-2 border-[#8f7cff]/40 bg-[#8f7cff]/10 text-[#b9a9ff] hover:bg-[#8f7cff]/20 font-semibold"
               >
-                <Sparkles className="h-4 w-4 text-teal-600" />
+                <Sparkles className="h-4 w-4 text-[#b9a9ff]" />
                 <span>{scoping ? "AI Decomposing..." : "AI Auto-Scope Milestones"}</span>
               </Button>
             </div>
@@ -247,27 +244,27 @@ export default function PostProblemPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Challenge Title
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Edge Diabetic Retinopathy Detection on Cortex-A53"
-                    className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                       Engagement Model
                     </label>
                     <select
                       value={engagementModel}
                       onChange={(e) => setEngagementModel(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] px-3 font-mono text-xs text-white focus:border-[#8f7cff] focus:outline-none"
                     >
                       <option value="funded">Funded (Guaranteed Escrow)</option>
                       <option value="stipend">Stipend Supported</option>
@@ -277,25 +274,25 @@ export default function PostProblemPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                       Total Budget (Integer Rupees)
                     </label>
-                    <input
+                    <Input
                       type="number"
                       value={budget}
                       onChange={(e) => setBudget(parseInt(e.target.value) || 0)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+                      className="mt-1.5"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                       Data Sensitivity Label
                     </label>
                     <select
                       value={sensitivityLabel}
                       onChange={(e) => setSensitivityLabel(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] px-3 font-mono text-xs text-white focus:border-[#8f7cff] focus:outline-none"
                     >
                       <option value="Public">Public (Open Challenge)</option>
                       <option value="Confidential">Confidential (Gated Brief)</option>
@@ -305,7 +302,7 @@ export default function PostProblemPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Public Summary (Visible to all students &amp; candidates)
                   </label>
                   <textarea
@@ -313,14 +310,14 @@ export default function PostProblemPage() {
                     value={publicSummary}
                     onChange={(e) => setPublicSummary(e.target.value)}
                     placeholder="Concise technical overview of the engineering goal..."
-                    className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-3 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none focus:ring-1 focus:ring-[#8f7cff]"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <Lock className="h-3.5 w-3.5 text-amber-600" />
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <Lock className="h-3.5 w-3.5 text-amber-400" />
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                       Confidential Brief &amp; Datasets (Gated: Only unlocked upon charter acceptance)
                     </label>
                   </div>
@@ -329,7 +326,7 @@ export default function PostProblemPage() {
                     value={confidentialBrief}
                     onChange={(e) => setConfidentialBrief(e.target.value)}
                     placeholder="Proprietary clinical specs, dataset links, and strict acceptance criteria..."
-                    className="mt-1 w-full rounded-lg border border-slate-300 p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-3 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none focus:ring-1 focus:ring-[#8f7cff]"
                   />
                 </div>
               </CardContent>
@@ -340,8 +337,8 @@ export default function PostProblemPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-bold">2. Milestone Breakdown &amp; Budget Lockers</CardTitle>
-                  <p className="text-xs text-slate-500">
-                    Allocated: Rs {totalMilestoneBudget.toLocaleString()} of Rs {Number(budget).toLocaleString()} Total
+                  <p className="font-mono text-xs text-[#9d9da8] mt-0.5">
+                    Allocated: ₹{totalMilestoneBudget.toLocaleString("en-IN")} of ₹{Number(budget).toLocaleString("en-IN")} Total
                   </p>
                 </div>
                 <Button
@@ -349,7 +346,7 @@ export default function PostProblemPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleAddMilestone}
-                  className="gap-1 text-xs font-bold"
+                  className="gap-1.5 text-xs font-semibold"
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
                   <span>Add Milestone</span>
@@ -360,11 +357,11 @@ export default function PostProblemPage() {
                 {milestones.map((m, idx) => (
                   <div
                     key={m.sequence}
-                    className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-3"
+                    className="rounded-2xl border border-white/[0.08] bg-[#050508]/80 p-4 space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="default" className="text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <Badge variant="default" className="font-mono text-[10px]">
                           M{m.sequence}
                         </Badge>
                         <input
@@ -372,26 +369,26 @@ export default function PostProblemPage() {
                           value={m.title}
                           onChange={(e) => handleUpdateMilestone(idx, "title", e.target.value)}
                           placeholder="Milestone Title"
-                          className="font-bold text-sm bg-transparent border-b border-dashed border-slate-300 focus:outline-none dark:border-slate-700"
+                          className="font-semibold text-sm bg-transparent border-b border-dashed border-white/[0.16] text-white focus:border-[#8f7cff] focus:outline-none pb-0.5"
                         />
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-slate-500">Rs</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs text-[#6f6f7b]">₹</span>
                           <input
                             type="number"
                             value={m.budget}
                             onChange={(e) =>
                               handleUpdateMilestone(idx, "budget", parseInt(e.target.value) || 0)
                             }
-                            className="w-24 rounded border border-slate-300 p-1 text-right text-xs font-bold dark:border-slate-700 dark:bg-slate-950"
+                            className="w-24 rounded-lg border border-white/[0.12] bg-[#0c0d12] p-1.5 text-right font-mono text-xs font-bold text-white focus:border-[#8f7cff] focus:outline-none"
                           />
                         </div>
                         {milestones.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveMilestone(idx)}
-                            className="text-slate-400 hover:text-rose-600"
+                            className="text-[#6f6f7b] hover:text-rose-400 transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -404,11 +401,11 @@ export default function PostProblemPage() {
                       value={m.description}
                       onChange={(e) => handleUpdateMilestone(idx, "description", e.target.value)}
                       placeholder="Milestone technical scope and deliverable description..."
-                      className="w-full rounded border border-slate-200 p-2 text-xs dark:border-slate-800 dark:bg-slate-950"
+                      className="w-full rounded-lg border border-white/[0.08] bg-[#0c0d12] p-2 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                     />
 
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-500">
+                      <label className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#6f6f7b]">
                         Required Skills (comma-separated):
                       </label>
                       <input
@@ -416,7 +413,7 @@ export default function PostProblemPage() {
                         value={m.skillsText}
                         onChange={(e) => handleUpdateMilestone(idx, "skillsText", e.target.value)}
                         placeholder="e.g. Python, PyTorch, Edge AI"
-                        className="mt-0.5 w-full rounded border border-slate-200 p-1.5 text-xs dark:border-slate-800 dark:bg-slate-950"
+                        className="mt-1 w-full rounded-lg border border-white/[0.08] bg-[#0c0d12] p-1.5 font-mono text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -431,7 +428,7 @@ export default function PostProblemPage() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Scope of Work
                   </label>
                   <textarea
@@ -439,65 +436,65 @@ export default function PostProblemPage() {
                     value={charterScope}
                     onChange={(e) => setCharterScope(e.target.value)}
                     placeholder="Official scope governing accepted milestone deliverables..."
-                    className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     IP &amp; Attribution Clause
                   </label>
                   <textarea
                     rows={2}
                     value={ipClause}
                     onChange={(e) => setIpClause(e.target.value)}
-                    className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Confidentiality Clause
                   </label>
                   <textarea
                     rows={2}
                     value={confidentialityClause}
                     onChange={(e) => setConfidentialityClause(e.target.value)}
-                    className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Exit &amp; Pro-Rata Payment Terms
                   </label>
                   <textarea
                     rows={2}
                     value={exitTerms}
                     onChange={(e) => setExitTerms(e.target.value)}
-                    className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <label className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9d9da8]">
                     Commercialisation &amp; Co-Authorship
                   </label>
                   <textarea
                     rows={2}
                     value={commercialisationClause}
                     onChange={(e) => setCommercialisationClause(e.target.value)}
-                    className="mt-1 w-full rounded border border-slate-300 p-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                    className="mt-1.5 w-full rounded-xl border border-white/[0.12] bg-[#0c0d12] p-2.5 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none"
                   />
                 </div>
               </CardContent>
 
-              <CardFooter className="flex justify-end gap-3 border-t border-slate-100 p-4 dark:border-slate-800">
+              <CardFooter className="flex justify-end gap-3 border-t border-white/[0.06] p-5">
                 <Button
                   size="lg"
                   disabled={submitting}
                   onClick={handleSubmitProblem}
-                  className="gap-2 font-black"
+                  className="gap-2 font-semibold h-11 px-6"
                 >
                   <Send className="h-4 w-4" />
                   <span>{submitting ? "Publishing to Ledger..." : "Publish Problem & Charter v1"}</span>

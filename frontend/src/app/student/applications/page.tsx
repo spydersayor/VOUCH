@@ -5,13 +5,11 @@ import Link from "next/link";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { RoleSidebar } from "@/components/shell/RoleSidebar";
 import { apiFetch } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   FileText,
-  Clock,
-  CheckCircle2,
   Lock,
   Unlock,
   Coins,
@@ -71,30 +69,30 @@ export default function StudentApplicationsPage() {
     <RoleGuard allowedRoles={["student", "admin"]}>
       <div className="flex min-h-[calc(100vh-4rem)]">
         <RoleSidebar role="student" />
-        <main className="flex-1 p-8 animate-fade-up">
+        <main className="flex-1 p-6 sm:p-10 animate-fade-up">
           <div className="mx-auto max-w-5xl space-y-8">
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+            <div className="border-b border-white/[0.06] pb-6">
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                 My Project Applications
               </h1>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              <p className="mt-1 text-xs sm:text-sm text-[#9d9da8]">
                 Track active project workspaces and review verified past initiatives with immutable ledger proofs.
               </p>
             </div>
 
             {loading ? (
               <div className="space-y-4">
-                <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
-                <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                <div className="h-28 animate-pulse rounded-2xl border border-white/[0.08] bg-[#0c0d12]" />
+                <div className="h-28 animate-pulse rounded-2xl border border-white/[0.08] bg-[#0c0d12]" />
               </div>
             ) : applications.length === 0 ? (
-              <Card className="p-12 text-center">
-                <FileText className="mx-auto h-12 w-12 text-slate-400" />
-                <h3 className="mt-4 text-base font-bold">No Applications Found</h3>
-                <p className="mt-1 text-xs text-slate-500">
+              <Card className="p-12 text-center border-white/[0.08] bg-[#0c0d12]">
+                <FileText className="mx-auto h-10 w-10 text-[#6f6f7b]" />
+                <h3 className="mt-4 text-base font-bold text-white">No Applications Found</h3>
+                <p className="mt-1 text-xs text-[#9d9da8]">
                   You haven&apos;t applied to any initiatives yet. Browse open industry problems to match with sponsors.
                 </p>
-                <Button asChild className="mt-6 font-bold" size="sm">
+                <Button asChild className="mt-6 font-semibold" size="sm">
                   <Link href="/open-problems">Browse Open Problems</Link>
                 </Button>
               </Card>
@@ -102,19 +100,19 @@ export default function StudentApplicationsPage() {
               <>
                 {/* SECTION 1: ACTIVE PROJECTS */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      <h2 className="text-lg font-bold text-white">
                         Active Initiatives ({activeApplications.length})
                       </h2>
-                      <Badge className="bg-emerald-600 text-white text-[10px]">
+                      <Badge variant="teal" className="font-mono text-[10px]">
                         Workspace Available
                       </Badge>
                     </div>
                   </div>
 
                   {activeApplications.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500 dark:border-slate-800">
+                    <div className="rounded-xl border border-dashed border-white/[0.08] p-6 text-center text-xs text-[#6f6f7b]">
                       No currently active projects. Check back after matching or review invitations.
                     </div>
                   ) : (
@@ -123,55 +121,60 @@ export default function StudentApplicationsPage() {
                       return (
                         <Card
                           key={app.id}
-                          className="p-6 transition-all hover:border-slate-300 dark:hover:border-slate-700"
+                          className="p-6 transition-all border-white/[0.08] bg-[#0c0d12]/90 hover:border-white/[0.16]"
                         >
                           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                            <div className="space-y-2">
+                            <div className="space-y-2.5">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                <h3 className="text-base sm:text-lg font-bold text-white">
                                   {app.title}
                                 </h3>
                                 <Badge
-                                  variant={app.member_status === "accepted" ? "default" : "outline"}
-                                  className="capitalize text-xs font-bold"
+                                  variant={
+                                    app.member_status === "accepted"
+                                      ? "default"
+                                      : app.member_status === "invited"
+                                      ? "outline"
+                                      : "subtle"
+                                  }
+                                  className="capitalize font-mono text-[10px]"
                                 >
                                   {app.member_status}
                                 </Badge>
-                                <Badge variant="subtle" className="text-xs uppercase">
+                                <Badge variant="subtle" className="font-mono text-[10px] uppercase">
                                   {app.engagement_model}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                              <p className="text-xs text-[#9d9da8] max-w-2xl leading-relaxed">
                                 {app.public_summary}
                               </p>
-                              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                              <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#9d9da8]">
                                 <span>
-                                  Sponsor: <strong className="text-slate-700 dark:text-slate-300">{app.sponsor_name}</strong>
+                                  Sponsor: <strong className="text-white">{app.sponsor_name}</strong>
                                 </span>
-                                <span>•</span>
+                                <span className="text-[#6f6f7b]">•</span>
                                 {app.budget > 0 ? (
-                                  <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
-                                    <Coins className="h-3.5 w-3.5" />
-                                    Rs {app.budget.toLocaleString()} Pool
+                                  <span className="font-bold text-emerald-400">
+                                    ₹{app.budget.toLocaleString("en-IN")} Pool
                                   </span>
                                 ) : (
-                                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                                  <span className="font-semibold text-[#b9a9ff]">
                                     Co-Authorship &amp; Credit
                                   </span>
                                 )}
-                                <span>•</span>
+                                <span className="text-[#6f6f7b]">•</span>
                                 <span suppressHydrationWarning>Applied on {new Date(app.joined_at).toLocaleDateString()}</span>
                               </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-2 shrink-0">
+                            <div className="flex flex-col items-end gap-2.5 shrink-0">
                               {app.charter_accepted ? (
-                                <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-50/60 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300">
+                                <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-3 py-1 font-mono text-xs font-semibold text-emerald-400">
                                   <Unlock className="h-3.5 w-3.5" />
                                   <span>Charter v{app.charter_version} Accepted</span>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-50/60 px-3 py-1.5 text-xs font-bold text-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
+                                <div className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-950/20 px-3 py-1 font-mono text-xs font-semibold text-amber-300">
                                   <Lock className="h-3.5 w-3.5" />
                                   <span>Charter Acceptance Pending</span>
                                 </div>
@@ -182,7 +185,7 @@ export default function StudentApplicationsPage() {
                                   asChild
                                   id={`btn-enter-workspace-${app.project_id}`}
                                   size="sm"
-                                  className="mt-1 gap-1.5 font-bold bg-teal-600 hover:bg-teal-700 text-white"
+                                  className="mt-1 gap-1.5 font-bold"
                                 >
                                   <Link href={`/projects/${app.project_id}/workspace`}>
                                     <FolderGit2 className="h-3.5 w-3.5" />
@@ -196,7 +199,7 @@ export default function StudentApplicationsPage() {
                                   id={`btn-review-charter-${app.project_id}`}
                                   size="sm"
                                   variant="outline"
-                                  className="mt-1 gap-1.5 font-bold border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                                  className="mt-1 gap-1.5 font-bold text-amber-400 border-amber-500/30 hover:bg-amber-950/30"
                                 >
                                   <Link href={`/charters/${app.project_id}`}>
                                     <span>Review charter and accept</span>
@@ -214,12 +217,12 @@ export default function StudentApplicationsPage() {
 
                 {/* SECTION 2: COMPLETED PROJECTS */}
                 <div className="space-y-4 pt-4">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      <h2 className="text-lg font-bold text-white">
                         Completed Projects ({completedApplications.length})
                       </h2>
-                      <Badge variant="subtle" className="text-[10px]">
+                      <Badge variant="subtle" className="font-mono text-[10px]">
                         Archived on Ledger
                       </Badge>
                     </div>
@@ -228,42 +231,42 @@ export default function StudentApplicationsPage() {
                   {completedApplications.map((app) => (
                     <Card
                       key={app.id}
-                      className="p-6 border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/40"
+                      className="p-6 border-white/[0.08] bg-[#0c0d12]/50"
                     >
                       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                            <h3 className="text-base sm:text-lg font-bold text-white">
                               {app.title}
                             </h3>
-                            <Badge className="bg-slate-700 text-white text-xs font-bold">
+                            <Badge className="bg-zinc-800 text-zinc-300 font-mono text-[10px]">
                               Closed
                             </Badge>
-                            <Badge variant="subtle" className="text-xs uppercase">
+                            <Badge variant="subtle" className="font-mono text-[10px] uppercase">
                               {app.engagement_model}
                             </Badge>
                           </div>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                          <p className="text-xs text-[#9d9da8] max-w-2xl leading-relaxed">
                             {app.public_summary}
                           </p>
 
                           {/* Final Outcome */}
                           {app.final_outcome && (
-                            <div className="rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-                              <strong className="text-slate-900 dark:text-slate-100">Final Outcome: </strong>
+                            <div className="rounded-xl border border-white/[0.08] bg-black/40 p-3 text-xs text-[#9d9da8]">
+                              <strong className="text-white">Final Outcome: </strong>
                               {app.final_outcome}
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                          <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#9d9da8]">
                             <span>
-                              Sponsor: <strong className="text-slate-700 dark:text-slate-300">{app.sponsor_name}</strong>
+                              Sponsor: <strong className="text-white">{app.sponsor_name}</strong>
                             </span>
-                            <span>•</span>
-                            <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                              Rs {app.budget.toLocaleString()} Settled
+                            <span className="text-[#6f6f7b]">•</span>
+                            <span className="font-bold text-emerald-400">
+                              ₹{app.budget.toLocaleString("en-IN")} Settled
                             </span>
-                            <span>•</span>
+                            <span className="text-[#6f6f7b]">•</span>
                             <span suppressHydrationWarning>Closed project</span>
                           </div>
                         </div>
@@ -290,7 +293,7 @@ export default function StudentApplicationsPage() {
                             className="gap-1.5 font-semibold text-xs"
                           >
                             <Link href={`/projects/${app.project_id}/timeline`}>
-                              <ShieldCheck className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
                               <span>View timeline</span>
                             </Link>
                           </Button>

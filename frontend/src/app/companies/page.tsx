@@ -9,52 +9,61 @@ import { Building2, Lock, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-r
 
 export default function CompaniesOverviewPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 animate-fade-up space-y-10">
-      <div className="text-center space-y-3">
-        <Badge variant="subtle" className="text-xs uppercase font-bold">
-          Enterprise Sponsor Portal
-        </Badge>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
-          De-Risk R&D with Proven Contributor Squads
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          Post challenges, protect confidential datasets, match with verified talent, and only disburse funds upon milestone approval.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <Card className="p-6 space-y-2 border-t-4 border-t-slate-800 dark:border-t-slate-200">
-          <Lock className="h-6 w-6 text-slate-800 dark:text-slate-200" />
-          <h3 className="font-bold text-base">Gated Briefs & NDA</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Proprietary datasets and clinical briefs remain cryptographically locked until participants sign the charter.
+    <div className="min-h-[calc(100vh-4rem)] bg-[#050508] text-white py-16 px-4">
+      <div className="mx-auto max-w-4xl animate-fade-up space-y-12">
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 text-xs font-mono text-[#b9a9ff]">
+            <Building2 className="h-3.5 w-3.5" />
+            ENTERPRISE SPONSOR PORTAL
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            De-Risk R&amp;D with Proven Contributor Squads
+          </h1>
+          <p className="text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
+            Post challenges, protect confidential datasets, match with verified talent, and only disburse funds upon milestone approval.
           </p>
-        </Card>
+        </div>
 
-        <Card className="p-6 space-y-2 border-t-4 border-t-slate-800 dark:border-t-slate-200">
-          <ShieldCheck className="h-6 w-6 text-slate-800 dark:text-slate-200" />
-          <h3 className="font-bold text-base">Receipt-Backed Talent</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Matchmaking algorithm ranks students by closed project deliverables, code similarity audits, and verified peer reviews.
-          </p>
-        </Card>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <Card className="p-6 space-y-3 border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md relative overflow-hidden group hover:border-violet-500/30 transition-all">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 text-[#b9a9ff] w-fit border border-violet-500/20">
+              <Lock className="h-5 w-5" />
+            </div>
+            <h3 className="font-bold text-base text-white">Gated Briefs &amp; NDA</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Proprietary datasets and clinical briefs remain cryptographically locked until participants sign the charter.
+            </p>
+          </Card>
 
-        <Card className="p-6 space-y-2 border-t-4 border-t-slate-800 dark:border-t-slate-200">
-          <Building2 className="h-6 w-6 text-slate-800 dark:text-slate-200" />
-          <h3 className="font-bold text-base">Clear IP Transfer</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Bilateral charters explicitly define commercial rights, license terms, and academic publication boundaries.
-          </p>
-        </Card>
-      </div>
+          <Card className="p-6 space-y-3 border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md relative overflow-hidden group hover:border-violet-500/30 transition-all">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 text-[#b9a9ff] w-fit border border-violet-500/20">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <h3 className="font-bold text-base text-white">Receipt-Backed Talent</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Matchmaking algorithm ranks students by closed project deliverables, code similarity audits, and verified peer reviews.
+            </p>
+          </Card>
 
-      <div className="text-center pt-4">
-        <Button size="lg" asChild className="font-bold">
-          <Link href="/signup?role=sponsor" className="flex items-center gap-2">
-            <span>Post a Problem Challenge</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
+          <Card className="p-6 space-y-3 border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md relative overflow-hidden group hover:border-violet-500/30 transition-all">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 text-[#b9a9ff] w-fit border border-violet-500/20">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <h3 className="font-bold text-base text-white">Clear IP Transfer</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Bilateral charters explicitly define commercial rights, license terms, and academic publication boundaries.
+            </p>
+          </Card>
+        </div>
+
+        <div className="text-center pt-4">
+          <Button size="lg" asChild className="font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border border-violet-400/30 shadow-xl shadow-violet-600/20">
+            <Link href="/signup?role=sponsor" className="flex items-center gap-2">
+              <span>Post a Problem Challenge</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
