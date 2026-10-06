@@ -43,8 +43,12 @@ PRO_THRESHOLD = 4.2
 CON_THRESHOLD = 3.3
 MIN_CLOSED_PROJECTS_FOR_FULL_DATA = 2
 
-# Exit Rules (SPEC.md Section 9)
+# Exit Rules (SPEC.md Section 9 & 13)
 SPONSOR_WITHDRAWAL_COMPENSATION_PCT = 0.10  # 10% extra charged to sponsor wallet
+ACCEPTANCE_WINDOW_DAYS = 7                  # Sponsor review acceptance window in days
+AI_COMPUTE_ESTIMATE_PER_SUBMISSION = 1500   # Estimated AI compute cost in rupees per submission
+SIMULATED_FAST_FORWARD_DAYS = 7             # Fast forward step in days
+DEFAULT_AUTO_ACCEPT_ON_SILENCE = True       # Default exit rule for sponsor silence
 
 # Similarity / Integrity (SPEC.md Section 12)
 SIMILARITY_SHINGLE_SIZE = 3
@@ -52,3 +56,4 @@ SIMILARITY_FLAG_THRESHOLD = 0.40  # Jaccard index >= 0.40 flags for review
 
 # Database file
 DB_PATH = "vouch.db"
+

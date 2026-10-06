@@ -29,6 +29,7 @@ import {
   Copy,
   Check,
   RefreshCw,
+<<<<<<< HEAD
   Star,
   LogOut,
   DollarSign,
@@ -36,8 +37,13 @@ import {
   CheckCircle,
   Ban,
   Scale,
+=======
+  LogOut,
+  Star,
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 export default function ProjectWorkspacePage() {
   const params = useParams();
@@ -91,6 +97,7 @@ export default function ProjectWorkspacePage() {
 
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
+<<<<<<< HEAD
   // Phase 6: Project Close, Structured Reviews & Midway Departures
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [closeOutcome, setCloseOutcome] = useState("Successfully completed all project objectives and deliverables.");
@@ -121,6 +128,36 @@ export default function ProjectWorkspacePage() {
   const [withdrawReason, setWithdrawReason] = useState("Corporate strategic reprioritization");
   const [withdrawingProject, setWithdrawingProject] = useState(false);
   const [withdrawResult, setWithdrawResult] = useState<any>(null);
+=======
+  // Leave project state
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [leaveGoodCause, setLeaveGoodCause] = useState(false);
+  const [leaveProgress, setLeaveProgress] = useState(0.40);
+  const [leavingProject, setLeavingProject] = useState(false);
+  const [leavePreview, setLeavePreview] = useState<any>(null);
+
+  // Withdraw sponsorship state
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [withdrawReason, setWithdrawReason] = useState("Corporate strategic reallocation");
+  const [withdrawingProject, setWithdrawingProject] = useState(false);
+  const [withdrawPreview, setWithdrawPreview] = useState<any>(null);
+
+  // Close project state
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [closeOutcome, setCloseOutcome] = useState("All milestone deliverables accepted and validated against clinical benchmarks.");
+  const [closingProject, setClosingProject] = useState(false);
+
+  // Leave review state
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [revieweeId, setRevieweeId] = useState("");
+  const [reviewQuality, setReviewQuality] = useState(5);
+  const [reviewTimeliness, setReviewTimeliness] = useState(5);
+  const [reviewCommunication, setReviewCommunication] = useState(5);
+  const [reviewCollaboration, setReviewCollaboration] = useState(5);
+  const [reviewIntegrity, setReviewIntegrity] = useState(5);
+  const [closedReviewComment, setClosedReviewComment] = useState("Exceptional engineering rigor and clear delivery documentation.");
+  const [submittingClosedReview, setSubmittingClosedReview] = useState(false);
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
 
   const fetchWorkspace = useCallback(async () => {
     if (!projectId) return;
@@ -384,6 +421,7 @@ export default function ProjectWorkspacePage() {
     }
   };
 
+<<<<<<< HEAD
   // Phase 6 Handlers
   const handleCloseProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -470,14 +508,79 @@ export default function ProjectWorkspacePage() {
 
   const handleSponsorWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
+=======
+  const openLeaveDialog = async () => {
+    try {
+      const res = await apiFetch<any>("/api/rehearsal/simulate", {
+        method: "POST",
+        body: JSON.stringify({
+          project_id: projectId,
+          scenario: "student_quits_40",
+          params: {
+            user_id: currentUser?.id,
+            good_cause: leaveGoodCause,
+            progress_fraction: leaveProgress,
+          },
+        }),
+      });
+      setLeavePreview(res.result);
+    } catch {
+      // Ignore preview failure
+    }
+    setLeaveDialogOpen(true);
+  };
+
+  const handleConfirmLeave = async () => {
+    setLeavingProject(true);
+    try {
+      const res = await apiFetch<any>(`/api/projects/${projectId}/leave`, {
+        method: "POST",
+        body: JSON.stringify({
+          good_cause: leaveGoodCause,
+          progress_fraction: leaveProgress,
+        }),
+      });
+      toast.success(res.message || "You have exited the project. Past accepted work remains verified.");
+      setLeaveDialogOpen(false);
+      router.push("/student/credentials");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to exit project");
+    } finally {
+      setLeavingProject(false);
+    }
+  };
+
+  const openWithdrawDialog = async () => {
+    try {
+      const res = await apiFetch<any>("/api/rehearsal/simulate", {
+        method: "POST",
+        body: JSON.stringify({
+          project_id: projectId,
+          scenario: "sponsor_withdraws",
+        }),
+      });
+      setWithdrawPreview(res.result);
+    } catch {
+      // Ignore preview failure
+    }
+    setWithdrawDialogOpen(true);
+  };
+
+  const handleConfirmWithdraw = async () => {
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
     setWithdrawingProject(true);
     try {
       const res = await apiFetch<any>(`/api/projects/${projectId}/withdraw`, {
         method: "POST",
         body: JSON.stringify({ reason: withdrawReason }),
       });
+<<<<<<< HEAD
       setWithdrawResult(res);
       toast.warning("Sponsorship withdrawn midway. 100% locked funds + 10% compensation transferred to team.");
+=======
+      toast.success(res.message || "Sponsorship withdrawn. Escrow liquidated and distributed with 10% penalty.");
+      setWithdrawDialogOpen(false);
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
       await fetchWorkspace();
     } catch (err: any) {
       toast.error(err.message || "Failed to withdraw sponsorship");
@@ -486,33 +589,146 @@ export default function ProjectWorkspacePage() {
     }
   };
 
+<<<<<<< HEAD
   // Server-Side RBAC Guard (403 Forbidden)
+=======
+  const handleConfirmClose = async () => {
+    setClosingProject(true);
+    try {
+      const res = await apiFetch<any>(`/api/projects/${projectId}/close`, {
+        method: "POST",
+        body: JSON.stringify({ final_outcome: closeOutcome }),
+      });
+      toast.success("Project formally closed! Contributors can now submit closed reviews.");
+      setCloseDialogOpen(false);
+      await fetchWorkspace();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to close project");
+    } finally {
+      setClosingProject(false);
+    }
+  };
+
+  const handleSubmitClosedReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revieweeId) {
+      toast.error("Please select a contributor to review");
+      return;
+    }
+    setSubmittingClosedReview(true);
+    try {
+      const res = await apiFetch<any>(`/api/projects/${projectId}/reviews`, {
+        method: "POST",
+        body: JSON.stringify({
+          reviewee_id: revieweeId,
+          quality: Number(reviewQuality),
+          timeliness: Number(reviewTimeliness),
+          communication: Number(reviewCommunication),
+          collaboration: Number(reviewCollaboration),
+          integrity: Number(reviewIntegrity),
+          comment: closedReviewComment,
+        }),
+      });
+      if (res.newbie_removed) {
+        toast.success("Review recorded on ledger! Contributor's Newbie badge has been permanently removed.");
+      } else {
+        toast.success(`Review submitted! Contributor rating updated to ${res.new_rating} ⭐.`);
+      }
+      setReviewDialogOpen(false);
+      await fetchWorkspace();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit review");
+    } finally {
+      setSubmittingClosedReview(false);
+    }
+  };
+
+  // Server-Side RBAC Guard (403 Forbidden with helpful relationship messaging)
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
   if (errorStatus === 403) {
+    let rel: "charter_not_accepted" | "invite_pending" | "member_quit" | "not_invited" | "wrong_account" = "not_invited";
+    if (errorMessage.includes("charter_not_accepted") || errorMessage.includes("Charter")) {
+      rel = "charter_not_accepted";
+    } else if (errorMessage.includes("invite_pending") || errorMessage.includes("pending")) {
+      rel = "invite_pending";
+    } else if (errorMessage.includes("member_quit") || errorMessage.includes("quit")) {
+      rel = "member_quit";
+    } else if (errorMessage.includes("wrong_account") || errorMessage.includes("wrong account")) {
+      rel = "wrong_account";
+    }
+
     return (
       <div className="mx-auto max-w-4xl px-4 py-16">
-        <Card className="border-rose-200 bg-rose-50/50 shadow-lg dark:border-rose-900/60 dark:bg-rose-950/20">
+        <Card className="border-amber-200 bg-amber-50/50 shadow-xl dark:border-amber-900/60 dark:bg-amber-950/20">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-400">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
               <Lock className="h-7 w-7" />
             </div>
-            <CardTitle className="text-2xl font-black text-rose-900 dark:text-rose-100">
-              Access Restricted (403 Forbidden)
+            <CardTitle className="text-2xl font-black text-slate-900 dark:text-slate-100">
+              {rel === "charter_not_accepted" && "Charter Signature Required"}
+              {rel === "invite_pending" && "Application Awaiting Sponsor Review"}
+              {rel === "member_quit" && "Project Membership Revoked (Left Project)"}
+              {rel === "not_invited" && "Not an Accepted Team Member"}
+              {rel === "wrong_account" && "Wrong Account Signed In"}
             </CardTitle>
-            <CardDescription className="text-sm font-medium text-rose-700 dark:text-rose-300">
-              {errorMessage || "Only accepted project members, the sponsor and administrators can open this project workspace."}
+            <CardDescription className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-2">
+              {rel === "charter_not_accepted" && (
+                <span>
+                  You have been matched and invited to this team, but you must accept the binding <strong>Charter Agreement</strong> to unlock the confidential datasets and workspace.
+                </span>
+              )}
+              {rel === "invite_pending" && (
+                <span>
+                  Your application or invitation for this initiative is currently pending. The sponsor must accept your application before access is granted.
+                </span>
+              )}
+              {rel === "member_quit" && (
+                <span>
+                  You previously left this project midway. Access to the active workspace has been revoked, but your accepted milestone credits remain preserved on the immutable ledger.
+                </span>
+              )}
+              {rel === "not_invited" && (
+                <span>
+                  In accordance with VOUCH project governance and NDA pledges, this active workspace is strictly restricted to accepted team members, the expert advisor, and the sponsor.
+                </span>
+              )}
+              {rel === "wrong_account" && (
+                <span>
+                  The account currently signed in does not have accepted membership for this initiative. Switch to your invited student or sponsor account.
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center text-xs text-slate-600 dark:text-slate-400">
+          <CardContent className="text-center text-xs text-slate-500 dark:text-slate-400">
             <p>
-              In accordance with VOUCH project governance and privacy rules, all active workspaces, repositories,
-              chat feeds and deliverable submissions are strictly protected server-side.
+              Every access attempt is strictly validated against the server-side authorization policy and immutable charter ledger.
             </p>
           </CardContent>
-          <CardFooter className="flex justify-center gap-3">
+          <CardFooter className="flex flex-wrap justify-center gap-3">
+            {rel === "charter_not_accepted" && (
+              <Button variant="default" asChild className="bg-teal-600 hover:bg-teal-700 text-white font-bold">
+                <Link href={`/charters/${projectId}`}>Review &amp; Accept Charter v1 &rarr;</Link>
+              </Button>
+            )}
+            {rel === "invite_pending" && (
+              <Button variant="default" asChild className="bg-teal-600 hover:bg-teal-700 text-white font-bold">
+                <Link href="/student/applications">View My Applications &rarr;</Link>
+              </Button>
+            )}
+            {rel === "member_quit" && (
+              <Button variant="default" asChild className="bg-teal-600 hover:bg-teal-700 text-white font-bold">
+                <Link href="/student/credentials">View Verified Credentials &rarr;</Link>
+              </Button>
+            )}
+            {rel === "not_invited" && (
+              <Button variant="outline" asChild>
+                <Link href="/open-problems">Browse Open Problems</Link>
+              </Button>
+            )}
             <Button variant="outline" asChild>
-              <Link href="/open-problems">Browse Open Problems</Link>
+              <Link href="/login">Switch Demo Account</Link>
             </Button>
-            <Button variant="default" asChild>
+            <Button variant="ghost" asChild>
               <Link href="/">Back to Home</Link>
             </Button>
           </CardFooter>
@@ -571,6 +787,7 @@ export default function ProjectWorkspacePage() {
             </p>
           </div>
 
+<<<<<<< HEAD
           <div className="flex flex-wrap items-center gap-3">
             {project?.status !== "closed" && (isSponsor || isAdmin) && (
               <Button
@@ -608,12 +825,67 @@ export default function ProjectWorkspacePage() {
               </Button>
             )}
 
+=======
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
             <Button variant="outline" size="sm" asChild className="gap-2 border-teal-200 hover:border-teal-400 dark:border-teal-900">
               <Link href={`/projects/${projectId}/timeline`}>
                 <ShieldCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                <span>Audit Ledger Timeline &amp; Verify</span>
+                <span className="hidden sm:inline">Audit Ledger Timeline</span>
               </Link>
             </Button>
+
+            {project?.status === "closed" ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setReviewDialogOpen(true)}
+                className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold"
+              >
+                <Star className="h-4 w-4 fill-current" />
+                <span>Leave Closed Review</span>
+              </Button>
+            ) : (
+              <>
+                {/* Leave button for student/expert team members */}
+                {(userRole === "student" || userRole === "expert") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openLeaveDialog}
+                    className="gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30 font-semibold"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Leave Project</span>
+                  </Button>
+                )}
+
+                {/* Withdraw and Close buttons for sponsor */}
+                {(isSponsor || isAdmin) && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openWithdrawDialog}
+                      className="gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30 font-semibold"
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      <span>Withdraw Sponsorship</span>
+                    </Button>
+
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setCloseDialogOpen(true)}
+                      className="gap-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Close Project</span>
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -1607,6 +1879,7 @@ export default function ProjectWorkspacePage() {
         </div>
       )}
 
+<<<<<<< HEAD
       {/* TAB 7: STRUCTURED REVIEWS & RATINGS */}
       {activeTab === "reviews" && (
         <div className="space-y-6">
@@ -2316,10 +2589,351 @@ export default function ProjectWorkspacePage() {
                   onChange={(e) => setQuitReason(e.target.value)}
                   placeholder="e.g. Academic conflict, urgent medical leave, personal circumstance"
                   className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+=======
+      {/* ===================== Modals & Dialogs ===================== */}
+
+      {/* 1. Leave Project Modal */}
+      <ConfirmDialog
+        isOpen={leaveDialogOpen}
+        onClose={() => setLeaveDialogOpen(false)}
+        onConfirm={handleConfirmLeave}
+        title="Leave Project Midway"
+        description="Exit the active initiative with pro-rata payout for accepted or reviewed work per SPEC.md Section 7."
+        confirmText={leavingProject ? "Processing Exit..." : "Confirm & Exit Project"}
+        confirmVariant="destructive"
+        loading={leavingProject}
+      >
+        <div className="space-y-4 text-xs">
+          <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <div className="font-semibold text-amber-900 dark:text-amber-200">
+              Rules &amp; Conservation Guarantee
+            </div>
+            <p className="mt-1 text-slate-600 dark:text-slate-400">
+              You receive pro-rata compensation for accepted milestones and reviewed in-progress contributions. Past accepted work credits remain verified on your portfolio. Active workspace access is revoked.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="font-semibold text-slate-700 dark:text-slate-300">
+              In-Progress Contribution:
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min="0.1"
+                max="0.9"
+                step="0.1"
+                value={leaveProgress}
+                onChange={(e) => {
+                  setLeaveProgress(parseFloat(e.target.value));
+                  openLeaveDialog();
+                }}
+                className="w-32 accent-teal-600"
+              />
+              <span className="font-mono font-bold text-teal-600 dark:text-teal-400">
+                {Math.round(leaveProgress * 100)}%
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="leave-good-cause"
+              checked={leaveGoodCause}
+              onChange={(e) => {
+                setLeaveGoodCause(e.target.checked);
+                openLeaveDialog();
+              }}
+              className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            />
+            <label htmlFor="leave-good-cause" className="font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
+              Apply Good Cause Exception (Medical/academic conflict — waives -0.5 star penalty)
+            </label>
+          </div>
+
+          {leavePreview && leavePreview.table_lines && (
+            <div className="mt-2 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="bg-slate-50 px-3 py-2 font-bold uppercase tracking-wider text-[10px] text-slate-500 dark:bg-slate-900">
+                Itemized Rupee &amp; Star Impact Preview
+              </div>
+              <table className="w-full text-left text-[11px]">
+                <thead className="border-b border-slate-200 bg-slate-100/50 dark:border-slate-800 dark:bg-slate-950 text-slate-500">
+                  <tr>
+                    <th className="p-2">Person</th>
+                    <th className="p-2">Before</th>
+                    <th className="p-2">After</th>
+                    <th className="p-2">Delta</th>
+                    <th className="p-2">Stars</th>
+                    <th className="p-2">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {leavePreview.table_lines.map((l: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="p-2 font-semibold">{l.person}</td>
+                      <td className="p-2 font-mono">₹{l.rupees_before.toLocaleString()}</td>
+                      <td className="p-2 font-mono">₹{l.rupees_after.toLocaleString()}</td>
+                      <td className="p-2 font-mono font-bold text-teal-600 dark:text-teal-400">
+                        {l.rupees_delta >= 0 ? `+₹${l.rupees_delta}` : `-₹${Math.abs(l.rupees_delta)}`}
+                      </td>
+                      <td className="p-2">
+                        {l.star_change !== 0 ? (
+                          <span className={l.star_change > 0 ? "text-emerald-600" : "text-rose-600"}>
+                            {l.star_change > 0 ? `+${l.star_change}` : l.star_change}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="p-2 text-slate-500 max-w-[150px] truncate">{l.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
+
+      {/* 2. Withdraw Sponsorship Modal */}
+      <ConfirmDialog
+        isOpen={withdrawDialogOpen}
+        onClose={() => setWithdrawDialogOpen(false)}
+        onConfirm={handleConfirmWithdraw}
+        title="Withdraw Sponsorship & Liquidate Escrow"
+        description="Terminates initiative. Unreleased escrow funds + 10% sponsor compensation distributed to team."
+        confirmText={withdrawingProject ? "Liquidating..." : "Confirm & Liquidate Escrow"}
+        confirmVariant="destructive"
+        loading={withdrawingProject}
+      >
+        <div className="space-y-4 text-xs">
+          <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
+            <div className="font-semibold text-rose-900 dark:text-rose-200">
+              Sponsor Withdrawal Penalty
+            </div>
+            <p className="mt-1 text-slate-600 dark:text-slate-400">
+              All unreleased escrow funds immediately transfer to contributors by charter weights. In addition, an extra 10% compensation is charged to your sponsor wallet and distributed. Sponsor star rating incurs a -0.5 penalty and withdrawal count increases by 1.
+            </p>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              Withdrawal Justification (Recorded to Public Ledger):
+            </label>
+            <input
+              type="text"
+              value={withdrawReason}
+              onChange={(e) => setWithdrawReason(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              required
+            />
+          </div>
+
+          {withdrawPreview && withdrawPreview.table_lines && (
+            <div className="mt-2 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="bg-slate-50 px-3 py-2 font-bold uppercase tracking-wider text-[10px] text-slate-500 dark:bg-slate-900">
+                Liquidation &amp; Compensation Distribution
+              </div>
+              <table className="w-full text-left text-[11px]">
+                <thead className="border-b border-slate-200 bg-slate-100/50 dark:border-slate-800 dark:bg-slate-950 text-slate-500">
+                  <tr>
+                    <th className="p-2">Beneficiary</th>
+                    <th className="p-2">Role</th>
+                    <th className="p-2">Rupees After</th>
+                    <th className="p-2">Net Delta</th>
+                    <th className="p-2">Star Change</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {withdrawPreview.table_lines.map((l: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="p-2 font-semibold">{l.person}</td>
+                      <td className="p-2 uppercase text-[10px] text-slate-500">{l.role}</td>
+                      <td className="p-2 font-mono">₹{l.rupees_after.toLocaleString()}</td>
+                      <td className="p-2 font-mono font-bold">
+                        <span className={l.rupees_delta >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                          {l.rupees_delta >= 0 ? `+₹${l.rupees_delta.toLocaleString()}` : `-₹${Math.abs(l.rupees_delta).toLocaleString()}`}
+                        </span>
+                      </td>
+                      <td className="p-2 font-semibold">
+                        {l.star_change !== 0 ? (
+                          <span className={l.star_change > 0 ? "text-emerald-600" : "text-rose-600"}>
+                            {l.star_change > 0 ? `+${l.star_change}` : l.star_change}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
+
+      {/* 3. Close Project Modal */}
+      <ConfirmDialog
+        isOpen={closeDialogOpen}
+        onClose={() => setCloseDialogOpen(false)}
+        onConfirm={handleConfirmClose}
+        title="Close Project & Finalize Deliverables"
+        description="Formal sign-off of all completed milestones and outcome declaration."
+        confirmText={closingProject ? "Closing..." : "Close Project Formally"}
+        confirmVariant="default"
+        loading={closingProject}
+      >
+        <div className="space-y-3 text-xs">
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              Final Project Outcome Declaration:
+            </label>
+            <textarea
+              value={closeOutcome}
+              onChange={(e) => setCloseOutcome(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              required
+            />
+          </div>
+          <p className="text-slate-500">
+            Closing this project enables peer reviews. Contributors will be eligible for Newbie badge removal and ratings updates upon receiving their first review.
+          </p>
+        </div>
+      </ConfirmDialog>
+
+      {/* 4. Leave Closed Review Modal */}
+      {reviewDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+              <span>Leave Closed Project Review</span>
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Submit peer review across 5 dimensions. Permanently removes the Newbie badge for first-time project graduates.
+            </p>
+
+            <form onSubmit={handleSubmitClosedReview} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  Select Contributor to Review:
+                </label>
+                <select
+                  value={revieweeId}
+                  onChange={(e) => setRevieweeId(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  required
+                >
+                  <option value="">-- Choose team member --</option>
+                  {members?.map((m: any) => (
+                    <option key={m.user_id || m.id} value={m.user_id || m.id}>
+                      {m.name} ({m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 5-Dimensional Ratings */}
+              <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Quality (1-5):</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      step="1"
+                      value={reviewQuality}
+                      onChange={(e) => setReviewQuality(Number(e.target.value))}
+                      className="accent-amber-500"
+                    />
+                    <span className="font-bold w-4 text-right">{reviewQuality}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Timeliness (1-5):</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      step="1"
+                      value={reviewTimeliness}
+                      onChange={(e) => setReviewTimeliness(Number(e.target.value))}
+                      className="accent-amber-500"
+                    />
+                    <span className="font-bold w-4 text-right">{reviewTimeliness}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Communication (1-5):</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      step="1"
+                      value={reviewCommunication}
+                      onChange={(e) => setReviewCommunication(Number(e.target.value))}
+                      className="accent-amber-500"
+                    />
+                    <span className="font-bold w-4 text-right">{reviewCommunication}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Collaboration (1-5):</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      step="1"
+                      value={reviewCollaboration}
+                      onChange={(e) => setReviewCollaboration(Number(e.target.value))}
+                      className="accent-amber-500"
+                    />
+                    <span className="font-bold w-4 text-right">{reviewCollaboration}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Integrity (1-5):</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      step="1"
+                      value={reviewIntegrity}
+                      onChange={(e) => setReviewIntegrity(Number(e.target.value))}
+                      className="accent-amber-500"
+                    />
+                    <span className="font-bold w-4 text-right">{reviewIntegrity}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  Review Comment:
+                </label>
+                <textarea
+                  value={closedReviewComment}
+                  onChange={(e) => setClosedReviewComment(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
                   required
                 />
               </div>
 
+<<<<<<< HEAD
               {currentUser?.role === "admin" && (
                 <div className="flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-900 dark:bg-teal-950/20">
                   <input
@@ -2342,16 +2956,24 @@ export default function ProjectWorkspacePage() {
               </div>
 
               <div className="flex justify-end gap-2">
+=======
+              <div className="flex justify-end gap-2 pt-2">
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
+<<<<<<< HEAD
                   onClick={() => setShowQuitModal(false)}
+=======
+                  onClick={() => setReviewDialogOpen(false)}
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
+<<<<<<< HEAD
                   disabled={quittingProject}
                   size="sm"
                   className="bg-rose-600 text-white hover:bg-rose-700"
@@ -2420,6 +3042,13 @@ export default function ProjectWorkspacePage() {
                   className="bg-rose-600 text-white hover:bg-rose-700"
                 >
                   {withdrawingProject ? "Withdrawing..." : "Confirm Sponsorship Withdrawal"}
+=======
+                  size="sm"
+                  disabled={submittingClosedReview}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold"
+                >
+                  {submittingClosedReview ? "Submitting..." : "Submit Review"}
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
                 </Button>
               </div>
             </form>

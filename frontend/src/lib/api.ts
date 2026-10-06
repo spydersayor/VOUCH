@@ -45,11 +45,19 @@ export async function apiFetch<T = any>(
   }
 
   if (!res.ok) {
-    const errorMsg =
-      (typeof data === "object" && (data.detail || data.message)) ||
-      `Request failed with status ${res.status}`;
+    let errorMsg = `Request failed with status ${res.status}`;
+    if (typeof data === "object" && data !== null) {
+      if (typeof data.detail === "string") {
+        errorMsg = data.detail;
+      } else if (typeof data.detail === "object" && data.detail?.message) {
+        errorMsg = data.detail.message;
+      } else if (data.message) {
+        errorMsg = data.message;
+      }
+    }
     const err: any = new Error(errorMsg);
     err.status = res.status;
+    err.data = data;
     throw err;
   }
 
