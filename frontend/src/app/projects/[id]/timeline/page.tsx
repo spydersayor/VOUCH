@@ -89,24 +89,24 @@ export default function ProjectTimelinePage() {
   // 403 Forbidden Access Guard
   if (errorStatus === 403) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16">
-        <Card className="border-rose-200 bg-rose-50/50 shadow-lg dark:border-rose-900/60 dark:bg-rose-950/20">
+      <div className="min-h-[calc(100vh-4rem)] bg-[#050508] text-white flex items-center justify-center px-4 py-16">
+        <Card className="max-w-xl w-full border-rose-500/30 bg-[#0c0d12]/90 backdrop-blur-md shadow-2xl">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-900/60 dark:text-rose-400">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
               <Lock className="h-7 w-7" />
             </div>
-            <CardTitle className="text-2xl font-black text-rose-900 dark:text-rose-100">
+            <CardTitle className="text-2xl font-bold text-white">
               Access Restricted (403 Forbidden)
             </CardTitle>
-            <CardDescription className="text-sm font-medium text-rose-700 dark:text-rose-300">
+            <CardDescription className="text-sm text-zinc-400">
               {errorMessage || "Only accepted project members, the sponsor and administrators can inspect the project audit ledger."}
             </CardDescription>
           </CardHeader>
-          <CardFooter className="flex justify-center gap-3">
-            <Button variant="outline" asChild>
+          <CardFooter className="flex justify-center gap-3 pt-4 border-t border-white/[0.06]">
+            <Button variant="outline" asChild className="border-white/10 hover:bg-white/[0.04] text-xs">
               <Link href="/open-problems">Browse Open Problems</Link>
             </Button>
-            <Button variant="default" asChild>
+            <Button variant="default" asChild className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold border border-violet-400/30">
               <Link href="/">Back to Home</Link>
             </Button>
           </CardFooter>
@@ -117,10 +117,10 @@ export default function ProjectTimelinePage() {
 
   if (loading && !timelineData) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <RefreshCw className="h-8 w-8 animate-spin text-teal-600" />
-          <p className="text-sm font-medium">Loading ledger timeline and verifying SHA-256 signatures...</p>
+      <div className="min-h-[calc(100vh-4rem)] bg-[#050508] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-zinc-400">
+          <RefreshCw className="h-8 w-8 animate-spin text-[#b9a9ff]" />
+          <p className="text-sm font-mono text-zinc-400">Loading ledger timeline and verifying SHA-256 signatures...</p>
         </div>
       </div>
     );
@@ -132,174 +132,177 @@ export default function ProjectTimelinePage() {
   const getActionIcon = (action: string) => {
     switch (action) {
       case "FILE_UPLOADED":
-        return <FileCode className="h-4 w-4 text-sky-600" />;
+        return <FileCode className="h-4 w-4 text-sky-400" />;
       case "PROJECT_CHAT_MESSAGE":
-        return <MessageSquare className="h-4 w-4 text-teal-600" />;
+        return <MessageSquare className="h-4 w-4 text-[#b9a9ff]" />;
       case "DELIVERABLE_SUBMITTED":
-        return <FileText className="h-4 w-4 text-indigo-600" />;
+        return <FileText className="h-4 w-4 text-violet-400" />;
       case "SUBMISSION_FLAGGED_FOR_REVIEW":
-        return <AlertTriangle className="h-4 w-4 text-amber-600" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-400" />;
       case "EXPERT_REVIEW_RECORDED":
-        return <UserCheck className="h-4 w-4 text-emerald-600" />;
+        return <UserCheck className="h-4 w-4 text-emerald-400" />;
       case "SPONSOR_MILESTONE_ACCEPTED":
       case "MILESTONE_ACCEPTED":
-        return <Award className="h-4 w-4 text-emerald-600" />;
+        return <Award className="h-4 w-4 text-emerald-400" />;
       case "LOCKER_FUNDS_RELEASED":
-        return <Coins className="h-4 w-4 text-amber-600" />;
+        return <Coins className="h-4 w-4 text-amber-400" />;
       case "CERTIFICATE_ISSUED":
-        return <ShieldCheck className="h-4 w-4 text-indigo-600" />;
+        return <ShieldCheck className="h-4 w-4 text-violet-400" />;
       case "AI_AGENT_ACTION_PROPOSED":
       case "AI_AGENT_ACTION_APPROVED":
-        return <Bot className="h-4 w-4 text-purple-600" />;
+        return <Bot className="h-4 w-4 text-purple-400" />;
       default:
-        return <ShieldCheck className="h-4 w-4 text-slate-600" />;
+        return <ShieldCheck className="h-4 w-4 text-zinc-400" />;
     }
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild className="gap-1.5 -ml-2 text-xs">
-              <Link href={`/projects/${projectId}/workspace`}>
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Back to Workspace</span>
-              </Link>
-            </Button>
-            <Badge variant="outline" className="text-xs uppercase font-mono">
-              {project?.id}
-            </Badge>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#050508] text-white py-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6 animate-fade-up">
+        {/* Header */}
+        <div className="flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md p-6 sm:p-8 relative overflow-hidden md:flex-row md:items-center md:justify-between">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild className="gap-1.5 -ml-2 text-xs font-mono text-zinc-400 hover:text-white">
+                <Link href={`/projects/${projectId}/workspace`}>
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Back to Workspace</span>
+                </Link>
+              </Button>
+              <Badge variant="outline" className="text-xs font-mono uppercase border-white/10 text-zinc-300">
+                {project?.id}
+              </Badge>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Provable Ledger Timeline
+            </h1>
+            <p className="max-w-2xl text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              Cryptographic, append-only SHA-256 audit trail for {project?.title}. Every upload, chat message, submission, expert review, decision, and payout is permanently verifiable.
+            </p>
           </div>
-          <h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100 sm:text-3xl">
-            Provable Ledger Timeline
-          </h1>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 sm:text-sm">
-            Cryptographic, append-only SHA-256 audit trail for {project?.title}. Every upload, chat message, submission, expert review, decision, and payout is permanently verifiable.
-          </p>
+
+          <div className="flex flex-col items-end gap-2.5">
+            <Button
+              onClick={handleVerifyLedger}
+              disabled={verifyingLedger}
+              className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold border border-violet-400/30 shadow-lg shadow-violet-600/20 text-xs font-mono"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>{verifyingLedger ? "Verifying Hash Chain..." : "Verify Ledger Integrity"}</span>
+            </Button>
+
+            {verificationResult && (
+              <div
+                className={`flex items-center gap-1.5 text-xs font-mono ${
+                  isOk ? "text-emerald-400" : "text-rose-400"
+                }`}
+              >
+                {isOk ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                <span>
+                  {isOk
+                    ? `Intact: Hash Chain Valid (${verificationResult.total_entries} blocks)`
+                    : `Alert: Tamper detected at #${verificationResult.tampered_at_seq}`}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          <Button
-            onClick={handleVerifyLedger}
-            disabled={verifyingLedger}
-            className="gap-2 bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
-          >
-            <ShieldCheck className="h-4 w-4" />
-            <span>{verifyingLedger ? "Verifying Hash Chain..." : "Verify Ledger Integrity"}</span>
-          </Button>
-
-          {verificationResult && (
-            <div
-              className={`flex items-center gap-1.5 text-xs font-semibold ${
-                isOk ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-              }`}
-            >
-              {isOk ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-              <span>
-                {isOk
-                  ? `Intact: Hash Chain Valid (${verificationResult.total_entries} blocks)`
-                  : `Alert: Tamper detected at #${verificationResult.tampered_at_seq}`}
-              </span>
+        {/* Ledger Stats Banner */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl border border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md p-4">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Project Events</div>
+            <div className="mt-1.5 text-2xl font-bold text-white font-mono">{total_events || 0}</div>
+          </div>
+          <div className="rounded-xl border border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md p-4">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Hash Algorithm</div>
+            <div className="mt-1.5 font-mono text-sm font-bold text-[#b9a9ff]">SHA-256 Chained</div>
+          </div>
+          <div className="rounded-xl border border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md p-4">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Ledger Status</div>
+            <div className="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-emerald-400 font-mono">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Sound &amp; Immutable</span>
             </div>
+          </div>
+          <div className="rounded-xl border border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-md p-4">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">Active Governance</div>
+            <div className="mt-1.5 text-sm font-semibold text-zinc-200">Zero-Knowledge Proof</div>
+          </div>
+        </div>
+
+        {/* Chronological Timeline Stream */}
+        <div className="space-y-4">
+          {events?.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/[0.08] p-12 text-center text-xs text-zinc-500 font-mono">
+              No ledger events logged for this project yet.
+            </div>
+          ) : (
+            events?.map((ev: any) => {
+              const payload = typeof ev.payload === "string" ? JSON.parse(ev.payload) : ev.payload;
+              return (
+                <div
+                  key={ev.seq}
+                  className="relative rounded-2xl border border-white/[0.06] bg-[#0c0d12]/90 backdrop-blur-md p-5 transition hover:border-violet-500/30"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-[#b9a9ff] border border-violet-500/20">
+                        {getActionIcon(ev.action)}
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-zinc-400">#{ev.seq}</span>
+                          <Badge variant="outline" className="text-xs uppercase font-mono border-white/10 text-white">
+                            {ev.action.replace(/_/g, " ")}
+                          </Badge>
+                          {ev.on_behalf_of && (
+                            <Badge variant="subtle" className="text-[10px] font-mono text-[#b9a9ff] bg-violet-500/10 border-violet-500/20">
+                              on_behalf_of: {ev.on_behalf_of}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-400">
+                          Actor: <strong className="text-white">{ev.actor_name}</strong> ({ev.actor_role}) &bull;{" "}
+                          <span className="font-mono text-zinc-500">{new Date(ev.timestamp).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-lg bg-[#121218] px-2.5 py-1 font-mono text-[10px] text-zinc-400 border border-white/[0.04]">
+                        Hash: {ev.entry_hash.substring(0, 14)}...
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(ev.entry_hash, `hash_${ev.seq}`)}
+                        className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+                        title="Copy SHA-256 block hash"
+                      >
+                        {copiedHash === `hash_${ev.seq}` ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Payload Content */}
+                  <div className="mt-4 rounded-xl bg-[#08090d] border border-white/[0.04] p-3 text-xs font-mono text-zinc-300">
+                    <pre className="overflow-x-auto whitespace-pre-wrap">{JSON.stringify(payload, null, 2)}</pre>
+                  </div>
+
+                  {/* Previous Hash Linkage */}
+                  <div className="mt-2.5 flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                    <span>Prev Hash: {ev.prev_hash ? `${ev.prev_hash.substring(0, 18)}...` : "GENESIS_BLOCK"}</span>
+                    <span>Block Height #{ev.seq}</span>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
-      </div>
-
-      {/* Ledger Stats Banner */}
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Events</div>
-          <div className="mt-1 text-xl font-black text-slate-900 dark:text-slate-100">{total_events || 0}</div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Hash Algorithm</div>
-          <div className="mt-1 font-mono text-sm font-bold text-teal-600 dark:text-teal-400">SHA-256 Chained</div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ledger Status</div>
-          <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>Cryptographically Sound</span>
-          </div>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Governance</div>
-          <div className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200">Zero-Knowledge Attestation</div>
-        </div>
-      </div>
-
-      {/* Chronological Timeline Stream */}
-      <div className="space-y-4">
-        {events?.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-xs text-slate-500 dark:border-slate-800">
-            No ledger events logged for this project yet.
-          </div>
-        ) : (
-          events?.map((ev: any, idx: number) => {
-            const payload = typeof ev.payload === "string" ? JSON.parse(ev.payload) : ev.payload;
-            return (
-              <div
-                key={ev.seq}
-                className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                      {getActionIcon(ev.action)}
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-black text-slate-400">#{ev.seq}</span>
-                        <Badge variant="outline" className="text-xs uppercase font-bold">
-                          {ev.action.replace(/_/g, " ")}
-                        </Badge>
-                        {ev.on_behalf_of && (
-                          <Badge variant="subtle" className="text-[10px] font-mono">
-                            on_behalf_of: {ev.on_behalf_of}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        Actor: <strong className="text-slate-800 dark:text-slate-200">{ev.actor_name}</strong> ({ev.actor_role}) &bull;{" "}
-                        {new Date(ev.timestamp).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                      Hash: {ev.entry_hash.substring(0, 14)}...
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(ev.entry_hash, `hash_${ev.seq}`)}
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                      title="Copy SHA-256 block hash"
-                    >
-                      {copiedHash === `hash_${ev.seq}` ? (
-                        <Check className="h-3.5 w-3.5 text-teal-600" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Payload Content */}
-                <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs font-mono text-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                  <pre className="overflow-x-auto whitespace-pre-wrap">{JSON.stringify(payload, null, 2)}</pre>
-                </div>
-
-                {/* Previous Hash Linkage */}
-                <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                  <span>Prev Hash: {ev.prev_hash ? `${ev.prev_hash.substring(0, 18)}...` : "GENESIS_BLOCK"}</span>
-                  <span>Block Height #{ev.seq}</span>
-                </div>
-              </div>
-            );
-          })
-        )}
       </div>
     </div>
   );

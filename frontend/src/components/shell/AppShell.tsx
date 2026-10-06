@@ -19,8 +19,13 @@ import {
   Settings,
   LayoutDashboard,
   FolderSearch,
+  Sparkles,
+  ArrowUp,
+  Terminal,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { CursorFollower } from "@/components/fx/CursorFollower";
+import { triggerVerifyWave } from "@/components/fx/fx-config";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const {
@@ -35,6 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [ledgerStatus, setLedgerStatus] = useState<{
     status: "ok" | "tampered" | "loading";
     count?: number;
@@ -43,6 +49,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -55,8 +66,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }>("/api/ledger/verify");
         if (res.status === "ok") {
           setLedgerStatus({ status: "ok", count: res.count });
+          triggerVerifyWave("ok", undefined, res.count);
         } else {
           setLedgerStatus({ status: "tampered", broken_seq: res.broken_seq });
+          triggerVerifyWave("tampered", res.broken_seq);
         }
       } catch {
         setLedgerStatus({ status: "loading" });
@@ -71,86 +84,85 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setNotifOpen(false);
   }, [pathname]);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const roleHome = user ? `/${user.role}` : "/login";
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 transition-colors dark:bg-[#090d16] dark:text-slate-100">
+    <div className="flex min-h-screen flex-col bg-[#050508] text-[#f3f2ff] selection:bg-[#b9a9ff] selection:text-[#050508]">
+      <CursorFollower />
+
       {/* Demo Notification Banner */}
-      <div className="flex items-center justify-between border-b border-slate-800 bg-[#0f172a] px-4 py-2 text-xs text-slate-300">
-        <div className="mx-auto flex flex-wrap items-center justify-center gap-2">
-          <Badge variant="subtle" className="bg-slate-800 text-teal-400">
-            DEMO MODE
-          </Badge>
-          <span>
-            Synthetic environment with simulated escrow & local SHA-256 ledger.
-          </span>
+      <div className="border-b border-white/[0.06] bg-[#0c0d12] px-4 py-2 text-xs font-mono text-[#8b8ea0]">
+        <div className="mx-auto flex flex-wrap items-center justify-between max-w-7xl gap-2">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
+            <span className="uppercase tracking-widest text-[11px] text-violet-300 font-semibold">
+              DEMO PROTOCOL ACTIVE
+            </span>
+            <span className="hidden sm:inline text-slate-500">|</span>
+            <span className="hidden sm:inline text-slate-400">
+              Deterministic escrow sandbox & local SHA-256 cryptographic diary.
+            </span>
+          </div>
           <Link
             href="/how-it-works"
-            className="text-teal-300 underline hover:text-teal-200"
+            className="text-violet-300 hover:text-white underline tracking-wider transition-colors"
           >
-            How it works &rarr;
+            Protocol Spec &rarr;
           </Link>
         </div>
       </div>
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/95">
+      <header
+        className={`sticky top-0 z-50 border-b transition-all duration-300 ${
+          scrolled
+            ? "border-white/[0.08] bg-[#050508]/90 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.8)]"
+            : "border-white/[0.04] bg-transparent"
+        }`}
+      >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 text-slate-900 dark:text-white">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm dark:bg-teal-500">
-              <Shield className="h-5 w-5" />
+          {/* VOUCH Wordmark Left */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-900/80 via-[#181232] to-violet-950 border border-violet-400/40 text-violet-300 shadow-[0_0_12px_rgba(168,85,247,0.2)] group-hover:border-violet-300 transition-all">
+              <Shield className="h-4 w-4 text-violet-300 group-hover:scale-110 transition-transform" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tight">VOUCH</span>
-              <span className="-mt-1 text-[10px] font-bold tracking-widest text-teal-600 dark:text-teal-400">
-                PROVABLE WORK
+              <span className="text-base font-bold tracking-tight text-white font-mono">
+                VOUCH
+              </span>
+              <span className="-mt-1 text-[9px] font-mono tracking-[0.2em] text-violet-400 uppercase font-semibold">
+                PROOF LEDGER
               </span>
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden items-center gap-6 md:flex">
-            <Link
-              href="/how-it-works"
-              className={`text-sm font-medium transition-colors hover:text-teal-600 dark:hover:text-teal-400 ${
-                pathname === "/how-it-works"
-                  ? "text-teal-600 dark:text-teal-400"
-                  : "text-slate-600 dark:text-slate-400"
-              }`}
-            >
-              How it works
-            </Link>
-            <Link
-              href="/open-problems"
-              className={`text-sm font-medium transition-colors hover:text-teal-600 dark:hover:text-teal-400 ${
-                pathname === "/open-problems"
-                  ? "text-teal-600 dark:text-teal-400"
-                  : "text-slate-600 dark:text-slate-400"
-              }`}
-            >
-              Open problems
-            </Link>
-            <Link
-              href="/pricing"
-              className={`text-sm font-medium transition-colors hover:text-teal-600 dark:hover:text-teal-400 ${
-                pathname === "/pricing"
-                  ? "text-teal-600 dark:text-teal-400"
-                  : "text-slate-600 dark:text-slate-400"
-              }`}
-            >
-              Pricing & Split
-            </Link>
-            <Link
-              href="/faq"
-              className={`text-sm font-medium transition-colors hover:text-teal-600 dark:hover:text-teal-400 ${
-                pathname === "/faq"
-                  ? "text-teal-600 dark:text-teal-400"
-                  : "text-slate-600 dark:text-slate-400"
-              }`}
-            >
-              FAQ
-            </Link>
+          {/* Desktop Nav Links (dimmed inactive links) */}
+          <nav className="hidden items-center gap-7 md:flex font-mono text-xs tracking-wider uppercase">
+            {[
+              { href: "/", label: "Home" },
+              { href: "/how-it-works", label: "How It Works" },
+              { href: "/pricing", label: "Models" },
+              { href: "/open-problems", label: "Open Problems" },
+              { href: "/#ledger-verifier", label: "Ledger" },
+              { href: "/help", label: "Rehearse" },
+            ].map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`transition-colors duration-200 hover:text-white ${
+                    isActive ? "text-white font-bold" : "text-[#8b8ea0]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right Controls */}
@@ -159,43 +171,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden sm:flex">
               {ledgerStatus.status === "ok" ? (
                 <div
-                  className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300"
+                  className="flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
                   title="Cryptographic chain fully verified intact"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Ledger OK ({ledgerStatus.count} blocks)</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                  <span>LEDGER OK ({ledgerStatus.count})</span>
                 </div>
               ) : ledgerStatus.status === "tampered" ? (
                 <div
-                  className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-300"
+                  className="flex items-center gap-2 rounded-full border border-rose-500/50 bg-rose-950/40 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-pulse"
                   title={`Chain broken at block #${ledgerStatus.broken_seq}`}
                 >
-                  <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
+                  <AlertTriangle className="h-3 w-3 text-rose-400" />
                   <span>TAMPER AT #{ledgerStatus.broken_seq}</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500 dark:bg-slate-800">
-                  <span>Checking diary...</span>
+                <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-mono text-slate-400">
+                  <span className="h-1 w-1 rounded-full bg-slate-400 animate-ping" />
+                  <span>Auditing...</span>
                 </div>
               )}
             </div>
 
-            {/* Dark mode toggle */}
-            <ThemeToggle />
-
-            {/* Authenticated user menu vs Login/Signup */}
+            {/* Authenticated user menu vs Start a project / Login */}
             {user ? (
               <div className="relative flex items-center gap-2">
                 {/* Notification Bell */}
                 <div className="relative">
                   <button
                     onClick={() => setNotifOpen(!notifOpen)}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#0c0d12] text-slate-300 transition hover:border-violet-400/50 hover:text-white"
                     aria-label="Notifications"
                   >
-                    <Bell className="h-4 w-4" />
+                    <Bell className="h-3.5 w-3.5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white">
+                      <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-sm">
                         {unreadCount}
                       </span>
                     )}
@@ -203,60 +213,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                   {/* Notification Dropdown */}
                   {notifOpen && (
-                    <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:w-96">
-                      <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Notifications ({unreadCount} unread)
+                    <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-white/10 bg-[#0c0d12] p-3.5 shadow-2xl backdrop-blur-xl sm:w-96 animate-fade-up">
+                      <div className="mb-2.5 flex items-center justify-between border-b border-white/[0.06] pb-2">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#8b8ea0]">
+                          Notifications ({unreadCount})
                         </span>
                         <button
                           onClick={markAllNotificationsRead}
-                          className="text-xs font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                          className="text-[11px] font-mono font-semibold text-violet-300 hover:underline"
                         >
                           Mark all read
                         </button>
                       </div>
-                      <div className="max-h-72 space-y-2 overflow-y-auto">
+
+                      <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                         {notifications.length === 0 ? (
-                          <div className="py-6 text-center text-xs text-slate-400">
-                            No notifications yet.
+                          <div className="py-6 text-center text-xs text-slate-500 font-mono">
+                            No notifications yet
                           </div>
                         ) : (
                           notifications.slice(0, 5).map((n) => (
                             <Link
                               key={n.id}
                               href={n.link || "/notifications"}
-                              onClick={() => {
-                                if (!n.read) markNotificationRead(n.id);
-                                setNotifOpen(false);
-                              }}
-                              className={`block rounded-xl p-2.5 text-xs transition hover:opacity-90 ${
-                                !n.read
-                                  ? "border border-teal-100 bg-teal-50/80 dark:border-teal-900 dark:bg-teal-950/40"
-                                  : "bg-slate-50 dark:bg-slate-800/60"
+                              onClick={() => markNotificationRead(n.id)}
+                              className={`block rounded-xl border p-2.5 text-xs transition ${
+                                n.read
+                                  ? "border-white/[0.04] bg-white/[0.02] text-slate-400 hover:bg-white/[0.04]"
+                                  : "border-violet-400/30 bg-violet-950/20 text-slate-200 hover:bg-violet-950/30"
                               }`}
                             >
-                              <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100">
+                              <div className="flex items-center justify-between font-mono text-[10px] uppercase text-violet-300">
                                 <span>{n.title}</span>
                                 {!n.read && (
-                                  <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+                                  <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_#c4b5fd]" />
                                 )}
                               </div>
-                              <div className="mt-0.5 text-slate-600 dark:text-slate-400">
+                              <div className="mt-1 text-slate-300 leading-snug">
                                 {n.message}
-                              </div>
-                              <div className="mt-1 text-[10px] text-slate-400" suppressHydrationWarning>
-                                {mounted ? new Date(n.created_at).toLocaleTimeString() : ""}
                               </div>
                             </Link>
                           ))
                         )}
                       </div>
-                      <div className="mt-2 border-t border-slate-100 pt-2 text-center dark:border-slate-800">
+
+                      <div className="mt-2.5 border-t border-white/[0.06] pt-2 text-center">
                         <Link
                           href="/notifications"
-                          className="text-xs font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                          className="text-[11px] font-mono text-violet-300 hover:underline tracking-wider uppercase font-semibold"
                         >
-                          View all notifications &rarr;
+                          View all ledger events &rarr;
                         </Link>
                       </div>
                     </div>
@@ -266,103 +272,81 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Role Pill Link */}
                 <Link
                   href={roleHome}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-sm transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                  className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.05] px-3.5 py-1.5 text-xs font-mono tracking-wider uppercase text-white hover:border-violet-400/50 hover:bg-violet-950/30 transition shadow-sm"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-600 text-xs font-black text-white dark:bg-teal-500">
-                    {user.avatar_initials ||
-                      user.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <span className="hidden text-xs font-semibold text-slate-800 dark:text-slate-200 sm:inline">
-                    {user.name.split(" ")[0]}
-                  </span>
-                  <Badge
-                    variant="default"
-                    className="h-5 px-1.5 text-[10px] uppercase font-bold"
-                  >
-                    {user.role}
-                  </Badge>
+                  <User className="h-3 w-3 text-violet-400" />
+                  <span>{user.role}</span>
                 </Link>
 
-                <Button
-                  variant="outline"
-                  size="icon"
+                {/* Logout */}
+                <button
                   onClick={logout}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-transparent text-slate-400 hover:border-rose-400/40 hover:text-rose-400 transition"
                   title="Log out"
-                  className="rounded-xl"
                 >
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/login">Log in</Link>
-                </Button>
-                <Button variant="default" size="sm" asChild>
-                  <Link href="/signup">Sign up</Link>
-                </Button>
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/login"
+                  className="text-xs font-mono uppercase tracking-wider text-slate-300 hover:text-white transition-colors px-3 py-1.5"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  href="/open-problems"
+                  className="group relative inline-flex items-center justify-center h-9 px-4 sm:px-5 rounded-full bg-gradient-to-r from-violet-950 via-[#120d26] to-slate-950 text-xs font-mono tracking-wider uppercase font-semibold text-white border border-violet-400/50 hover:border-violet-300 shadow-[0_0_14px_rgba(168,85,247,0.3)] hover:shadow-[0_0_24px_rgba(168,85,247,0.6)] hover:-translate-y-0.5 transition-all"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 text-violet-300" />
+                    <span>START A PROJECT</span>
+                  </span>
+                </Link>
               </div>
             )}
 
-            {/* Mobile menu hamburger */}
+            {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 md:hidden dark:border-slate-800"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-[#0c0d12] text-slate-300 hover:text-white md:hidden"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown Nav */}
         {mobileMenuOpen && (
-          <div className="border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-950 md:hidden">
-            <nav className="flex flex-col space-y-3">
-              <Link
-                href="/how-it-works"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
-              >
-                How it works
+          <div className="border-b border-white/10 bg-[#050508]/98 px-6 py-6 backdrop-blur-2xl md:hidden animate-fade-up">
+            <nav className="flex flex-col space-y-4 font-mono text-xs uppercase tracking-widest text-[#8b8ea0]">
+              <Link href="/" className="hover:text-white transition-colors">
+                Home
               </Link>
-              <Link
-                href="/open-problems"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
-              >
-                Open problems
+              <Link href="/how-it-works" className="hover:text-white transition-colors">
+                How It Works
               </Link>
-              <Link
-                href="/pricing"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
-              >
-                Pricing & Fees
+              <Link href="/pricing" className="hover:text-white transition-colors">
+                Engagement Models & Split
               </Link>
-              <Link
-                href="/faq"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
-              >
-                FAQ
+              <Link href="/open-problems" className="hover:text-white transition-colors">
+                Open Problems
+              </Link>
+              <Link href="/#ledger-verifier" className="hover:text-white transition-colors">
+                Live Diary Verifier
+              </Link>
+              <Link href="/help" className="hover:text-white transition-colors">
+                Rehearsal Sandbox
               </Link>
               {user && (
-                <>
-                  <hr className="border-slate-200 dark:border-slate-800" />
-                  <Link
-                    href={roleHome}
-                    className="text-sm font-bold text-teal-600 dark:text-teal-400"
-                  >
+                <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+                  <Link href={roleHome} className="text-violet-300 font-bold">
                     My {user.role.toUpperCase()} Dashboard
                   </Link>
-                  <Link
-                    href="/settings"
-                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
-                  >
-                    Settings
-                  </Link>
-                </>
+                </div>
               )}
             </nav>
           </div>
@@ -370,110 +354,88 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 w-full">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-12 dark:border-slate-800 dark:bg-slate-950">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+      {/* Giant VOUCH Display Footer */}
+      <footer className="relative border-t border-white/[0.08] bg-[#050508] pt-20 pb-12 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16">
+          {/* Giant VOUCH Wordmark Header */}
+          <div className="w-full flex flex-col items-start border-b border-white/[0.08] pb-10">
+            <div className="text-6xl sm:text-8xl lg:text-9xl font-extralight tracking-tight text-white/95 leading-none select-none">
+              VOUCH
+            </div>
+            <p className="mt-4 text-xs font-mono uppercase tracking-[0.2em] text-[#8b8ea0]">
+              Proof-First Collaboration Protocol · Cryptographic Receipts
+            </p>
+          </div>
+
+          {/* Footer Multi-Column Grid */}
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4 font-mono text-xs">
             <div className="space-y-3">
-              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-                <Shield className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                <span>VOUCH</span>
+              <span className="text-[11px] uppercase tracking-[0.2em] text-white font-semibold block">
+                Navigate
+              </span>
+              <ul className="space-y-2 text-[#8b8ea0]">
+                <li><Link href="/" className="hover:text-violet-300 transition-colors">Home</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-violet-300 transition-colors">Protocol (How It Works)</Link></li>
+                <li><Link href="/open-problems" className="hover:text-violet-300 transition-colors">Open Problems</Link></li>
+                <li><Link href="/pricing" className="hover:text-violet-300 transition-colors">Pricing & 0% Student Fee</Link></li>
+                <li><Link href="/about" className="hover:text-violet-300 transition-colors">System Architecture</Link></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <span className="text-[11px] uppercase tracking-[0.2em] text-white font-semibold block">
+                Roles & Portals
+              </span>
+              <ul className="space-y-2 text-[#8b8ea0]">
+                <li><Link href="/students" className="hover:text-violet-300 transition-colors">Student Talent</Link></li>
+                <li><Link href="/experts" className="hover:text-violet-300 transition-colors">Co-signing Experts</Link></li>
+                <li><Link href="/companies" className="hover:text-violet-300 transition-colors">Enterprise Sponsors</Link></li>
+                <li><Link href="/login" className="hover:text-violet-300 transition-colors">Quick Login (7 Roles)</Link></li>
+                <li><Link href="/admin" className="hover:text-violet-300 transition-colors">Governance & Tamper Sim</Link></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <span className="text-[11px] uppercase tracking-[0.2em] text-white font-semibold block">
+                Verification & Trust
+              </span>
+              <ul className="space-y-2 text-[#8b8ea0]">
+                <li><Link href="/terms" className="hover:text-violet-300 transition-colors">Charter Terms (NDAs)</Link></li>
+                <li><Link href="/privacy" className="hover:text-violet-300 transition-colors">Confidentiality Rules</Link></li>
+                <li><Link href="/help" className="hover:text-violet-300 transition-colors">Rehearsal Engine Manual</Link></li>
+                <li><Link href="/contact" className="hover:text-violet-300 transition-colors">Contact (Ledger Logged)</Link></li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <span className="text-[11px] uppercase tracking-[0.2em] text-white font-semibold block">
+                Engineering
+              </span>
+              <p className="text-xs text-slate-400 font-sans leading-relaxed">
+                Built with Google Antigravity as an advanced agentic pair programmer. Engineered for strict local offline execution.
+              </p>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-violet-400/30 bg-violet-950/20 text-[10px] text-violet-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>SHA-256 Verified Sandbox</span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Work you can prove. Real milestones, locked rupee escrow, and
-                peer reviews anchored to an immutable ledger.
-              </p>
-              <p className="text-xs font-semibold text-teal-600 dark:text-teal-400">
-                Built with Google Antigravity as an AI coding tool.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
-                Platform
-              </h4>
-              <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                <li>
-                  <Link href="/how-it-works" className="hover:text-teal-600">
-                    How It Works
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/open-problems" className="hover:text-teal-600">
-                    Open Problems
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-teal-600">
-                    Pricing & Rupee Split
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="hover:text-teal-600">
-                    About Architecture
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
-                Roles
-              </h4>
-              <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                <li>
-                  <Link href="/students" className="hover:text-teal-600">
-                    For Students
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/experts" className="hover:text-teal-600">
-                    For Experts
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/companies" className="hover:text-teal-600">
-                    For Companies
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/login" className="hover:text-teal-600">
-                    Demo Quick-Login (7 Roles)
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
-                Trust & Verification
-              </h4>
-              <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                <li>
-                  <Link href="/terms" className="hover:text-teal-600">
-                    Charter Terms
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-teal-600">
-                    Confidentiality Pledge
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-teal-600">
-                    Contact Us (Logged to Ledger)
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/help" className="hover:text-teal-600">
-                    Demo Rehearsal Guide
-                  </Link>
-                </li>
-              </ul>
             </div>
           </div>
-          <div className="mt-8 border-t border-slate-100 pt-6 text-center text-xs text-slate-400 dark:border-slate-800">
-            &copy; 2026 VOUCH Platform. All synthetic demo data stored locally.
-            No external trackers or dependencies.
+
+          {/* Bottom Row: Honest Disclaimer & Back to Top */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-white/[0.06] text-xs font-mono text-[#8b8ea0]">
+            <span>
+              © 2026 VOUCH Platform · Prototype. All payments, escrows and KYC are simulated locally.
+            </span>
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="inline-flex items-center gap-2 hover:text-white transition-colors cursor-pointer"
+            >
+              <span>Back to the top</span>
+              <ArrowUp className="h-3.5 w-3.5 text-violet-400" />
+            </button>
           </div>
         </div>
       </footer>

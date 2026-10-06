@@ -99,20 +99,20 @@ export function ProsConsPanel({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <div className="rounded-2xl border border-white/[0.08] bg-[#0c0d12]/90 p-4 sm:p-5 backdrop-blur-xl shadow-xl shadow-black/40">
+      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9d9da8]">
             {title}
           </span>
           {data.is_newbie && (
-            <Badge variant="subtle" className="gap-1 border-teal-500/30 text-teal-700 dark:text-teal-300">
-              <Sparkles className="h-3 w-3" />
+            <Badge variant="subtle" className="gap-1 border-[#8f7cff]/30 bg-[#8f7cff]/10 text-[#b9a9ff]">
+              <Sparkles className="h-3 w-3 text-[#b9a9ff]" />
               Newbie Profile
             </Badge>
           )}
           {data.limited_data && !data.is_newbie && (
-            <Badge variant="subtle" className="gap-1 border-amber-500/30 text-amber-700 dark:text-amber-300">
+            <Badge variant="subtle" className="gap-1 border-amber-500/30 bg-amber-500/10 text-amber-300">
               <ShieldAlert className="h-3 w-3" />
               Limited Data (&lt; 2 closed projects)
             </Badge>
@@ -121,33 +121,33 @@ export function ProsConsPanel({
       </div>
 
       {data.is_newbie && data.newbie_message && (
-        <div className="mb-3 rounded-lg border border-teal-500/20 bg-teal-500/10 p-2.5 text-xs text-teal-800 dark:text-teal-200">
-          <p className="font-semibold">{data.newbie_message}</p>
-          <p className="mt-0.5 text-[11px] opacity-80">
+        <div className="mb-3.5 rounded-xl border border-[#8f7cff]/20 bg-[#8f7cff]/[0.06] p-3 text-xs text-white/90">
+          <p className="font-medium text-white">{data.newbie_message}</p>
+          <p className="mt-0.5 text-[11px] text-[#9d9da8]">
             Verified academic credentials and skill milestones shown below with zero adverse flags.
           </p>
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {/* Strengths (Pros) */}
         {data.pros.length > 0 && (
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+          <div className="space-y-2">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-400">
               Strengths ({data.pros.length})
             </span>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {data.pros.map((p) => {
                 const isExpanded = !!expandedKeys[p.key];
                 return (
                   <div
                     key={p.key}
-                    className="rounded-lg border border-emerald-500/20 bg-emerald-50/50 p-2 text-xs transition-all dark:bg-emerald-950/20"
+                    className="rounded-xl border border-emerald-500/20 bg-emerald-950/[0.15] p-3 text-xs transition-all hover:border-emerald-500/35"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-1.5">
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
+                        <span className="font-normal leading-relaxed text-white/90">
                           {p.text}
                         </span>
                       </div>
@@ -155,7 +155,7 @@ export function ProsConsPanel({
                         <button
                           type="button"
                           onClick={() => toggleExpand(p.key)}
-                          className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+                          className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-emerald-300 hover:text-emerald-200 transition-colors"
                         >
                           <span>Evidence</span>
                           {isExpanded ? (
@@ -168,30 +168,30 @@ export function ProsConsPanel({
                     </div>
 
                     {isExpanded && p.evidence && (
-                      <div className="mt-2 rounded border border-emerald-500/20 bg-white/70 p-2 text-[11px] dark:bg-slate-900/60">
-                        <div className="grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-400">
+                      <div className="mt-2.5 rounded-lg border border-white/[0.08] bg-[#050508]/80 p-3 text-[11px] backdrop-blur-md">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#9d9da8]">
                           <div>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="font-mono text-[10px] uppercase text-[#6f6f7b]">
                               Verified Source:
                             </span>{" "}
-                            {p.evidence.project || "Platform Closed Project"}
+                            <span className="text-white font-medium">{p.evidence.project || "Platform Closed Project"}</span>
                           </div>
                           <div>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="font-mono text-[10px] uppercase text-[#6f6f7b]">
                               Reviews:
                             </span>{" "}
-                            {p.evidence.review_count || 1} evaluations
+                            <span className="text-white font-medium">{p.evidence.review_count || 1} evaluations</span>
                           </div>
                         </div>
-                        <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-slate-500">
-                          <div className="flex items-center gap-1">
-                            <FileCheck className="h-3 w-3 text-emerald-600" />
-                            <span className="font-mono">Ledger Ref: {p.evidence.ledger_ref}</span>
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-2 text-[10px]">
+                          <div className="flex items-center gap-1.5 font-mono text-[#9d9da8]">
+                            <FileCheck className="h-3 w-3 text-emerald-400" />
+                            <span>Ledger Ref: {p.evidence.ledger_ref}</span>
                           </div>
                           {(p.evidence.charter_id || p.evidence.project_id) && (
                             <Link
                               href={`/charters/${p.evidence.charter_id || p.evidence.project_id}`}
-                              className="font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                              className="font-mono text-[#b9a9ff] hover:text-white transition-colors"
                             >
                               View Charter →
                             </Link>
@@ -208,8 +208,8 @@ export function ProsConsPanel({
 
         {/* Watch-outs (Cons) */}
         {data.cons.length > 0 && (
-          <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+          <div className="space-y-2 pt-1">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-amber-400">
               Watch-outs ({data.cons.length})
             </span>
             <div className="space-y-2">
@@ -219,12 +219,12 @@ export function ProsConsPanel({
                 return (
                   <div
                     key={c.key}
-                    className="rounded-lg border border-amber-500/30 bg-amber-50/50 p-2.5 text-xs dark:bg-amber-950/20"
+                    className="rounded-xl border border-amber-500/20 bg-amber-950/[0.15] p-3 text-xs transition-all hover:border-amber-500/35"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-400" />
+                        <span className="font-normal leading-relaxed text-white/90">
                           {c.text}
                         </span>
                       </div>
@@ -232,7 +232,7 @@ export function ProsConsPanel({
                         <button
                           type="button"
                           onClick={() => toggleExpand(c.key)}
-                          className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 hover:underline dark:text-amber-300"
+                          className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-amber-300 hover:text-amber-200 transition-colors"
                         >
                           <span>Evidence</span>
                           {isExpanded ? (
@@ -245,30 +245,30 @@ export function ProsConsPanel({
                     </div>
 
                     {isExpanded && c.evidence && (
-                      <div className="mt-2 rounded border border-amber-500/20 bg-white/70 p-2 text-[11px] dark:bg-slate-900/60">
-                        <div className="grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-400">
+                      <div className="mt-2.5 rounded-lg border border-white/[0.08] bg-[#050508]/80 p-3 text-[11px] backdrop-blur-md">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#9d9da8]">
                           <div>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="font-mono text-[10px] uppercase text-[#6f6f7b]">
                               Historical Project:
                             </span>{" "}
-                            {c.evidence.project || "Past Engagement"}
+                            <span className="text-white font-medium">{c.evidence.project || "Past Engagement"}</span>
                           </div>
                           <div>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="font-mono text-[10px] uppercase text-[#6f6f7b]">
                               Criterion Score:
                             </span>{" "}
-                            {c.evidence.metric_score ?? "N/A"}/5.0
+                            <span className="text-white font-medium">{c.evidence.metric_score ?? "N/A"}/5.0</span>
                           </div>
                         </div>
-                        <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-slate-500">
-                          <div className="flex items-center gap-1">
-                            <FileCheck className="h-3 w-3 text-amber-600" />
-                            <span className="font-mono">Ledger Audit: {c.evidence.ledger_ref}</span>
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-2 text-[10px]">
+                          <div className="flex items-center gap-1.5 font-mono text-[#9d9da8]">
+                            <FileCheck className="h-3 w-3 text-amber-400" />
+                            <span>Ledger Audit: {c.evidence.ledger_ref}</span>
                           </div>
                           {(c.evidence.charter_id || c.evidence.project_id) && (
                             <Link
                               href={`/charters/${c.evidence.charter_id || c.evidence.project_id}`}
-                              className="font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                              className="font-mono text-[#b9a9ff] hover:text-white transition-colors"
                             >
                               View Charter →
                             </Link>
@@ -279,12 +279,12 @@ export function ProsConsPanel({
 
                     {/* Candidate Public Reply */}
                     {c.reply ? (
-                      <div className="mt-2.5 rounded-md border border-slate-200 bg-white p-2 text-[11px] dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                          <MessageSquare className="h-3 w-3 text-teal-600" />
+                      <div className="mt-2.5 rounded-xl border border-white/[0.08] bg-[#050508]/80 p-3 text-[11px]">
+                        <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[#b9a9ff]">
+                          <MessageSquare className="h-3 w-3" />
                           <span>Candidate Public Reply:</span>
                         </div>
-                        <p className="mt-1 text-slate-600 dark:text-slate-300">
+                        <p className="mt-1 leading-relaxed text-white/90 italic">
                           &quot;{c.reply.text}&quot;
                         </p>
                       </div>
@@ -292,8 +292,8 @@ export function ProsConsPanel({
                       canReply && (
                         <div className="mt-2 pt-1">
                           {isReplying ? (
-                            <div className="space-y-2 rounded border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900">
-                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                            <div className="space-y-2 rounded-xl border border-white/[0.08] bg-[#050508]/90 p-3">
+                              <label className="font-mono text-[10px] uppercase tracking-wider text-[#9d9da8]">
                                 Post a public explanation anchored to ledger:
                               </label>
                               <textarea
@@ -301,7 +301,7 @@ export function ProsConsPanel({
                                 onChange={(e) => setReplyText(e.target.value)}
                                 placeholder="Explain context or how this was resolved..."
                                 rows={2}
-                                className="w-full rounded border border-slate-300 p-1.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                                className="w-full rounded-lg border border-white/[0.12] bg-[#0c0d12] p-2 text-xs text-white placeholder-[#6f6f7b] focus:border-[#8f7cff] focus:outline-none focus:ring-1 focus:ring-[#8f7cff]"
                               />
                               <div className="flex justify-end gap-2">
                                 <Button
@@ -330,7 +330,7 @@ export function ProsConsPanel({
                                 setReplyOpenKey(c.key);
                                 setReplyText("");
                               }}
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                              className="inline-flex items-center gap-1 font-mono text-[11px] text-[#b9a9ff] hover:text-white transition-colors"
                             >
                               <MessageSquare className="h-3 w-3" />
                               <span>Add public reply to this watch-out</span>
@@ -347,7 +347,7 @@ export function ProsConsPanel({
         )}
 
         {data.pros.length === 0 && data.cons.length === 0 && !data.is_newbie && (
-          <p className="text-xs text-slate-500 italic">
+          <p className="font-mono text-xs text-[#6f6f7b] italic">
             No historical reviews recorded yet for this profile.
           </p>
         )}

@@ -4,27 +4,25 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
+import { HeroScene } from "@/components/fx/HeroScene";
+import { HeroTandemLayout } from "@/components/hero/HeroTandemLayout";
+import { StatementSection } from "@/components/landing/StatementSection";
+import { EngagementShelfSection } from "@/components/landing/EngagementShelfSection";
+import { DetailRoomsSection } from "@/components/landing/DetailRoomsSection";
+import { PrinciplesSection } from "@/components/landing/PrinciplesSection";
+import { RolesJournalSection } from "@/components/landing/RolesJournalSection";
+import { triggerVerifyWave, triggerRehearsalScenario } from "@/components/fx/fx-config";
+import { toast } from "sonner";
 import {
   Shield,
   CheckCircle2,
   AlertTriangle,
-  ArrowRight,
-  Zap,
   RefreshCw,
-  Coins,
-  Award,
-  Sparkles,
-  Lock,
   ChevronDown,
-  Building2,
-  GraduationCap,
-  Scale,
-  PlayCircle,
-  FileCheck2,
-  Clock,
-  Layers,
+  Terminal,
+  RotateCcw,
+  Sparkles,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -43,8 +41,11 @@ export default function HomePage() {
     try {
       const data = await apiFetch<any>("/api/ledger/verify");
       setLedger(data);
+      // Trigger wave through dot field
+      triggerVerifyWave(data.status === "ok" ? "ok" : "tampered", data.broken_seq, data.count);
     } catch (e: any) {
       setLedger({ status: "error", reason: e.message });
+      triggerVerifyWave("tampered");
     } finally {
       setRefreshing(false);
     }
@@ -53,6 +54,34 @@ export default function HomePage() {
   useEffect(() => {
     fetchLedger();
   }, []);
+
+  const handleSimulateTamper = async () => {
+    triggerRehearsalScenario("scenario-tamper", "Simulate DB Tampering");
+    try {
+      await apiFetch("/api/ledger/simulate-tamper", {
+        method: "POST",
+        body: JSON.stringify({ seq: 2 }),
+      });
+      // Fire alarm wave through dot field
+      triggerVerifyWave("tampered", 2);
+      toast.error("Simulated DB tamper applied at block #2! Chain verification will now fail.");
+      await fetchLedger();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleResetData = async () => {
+    triggerRehearsalScenario("scenario-reset", "Reset Clean Chain");
+    try {
+      await apiFetch("/api/admin/reset", { method: "POST" });
+      triggerVerifyWave("ok", undefined, 24);
+      toast.success("Database and cryptographic ledger reset to clean state!");
+      await fetchLedger();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
 
   const toggleFaq = (idx: number) => {
     setActiveFaq(activeFaq === idx ? null : idx);
@@ -82,415 +111,197 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-16">
-      {/* 1. HERO SECTION */}
-      <section className="mx-auto max-w-4xl text-center pt-8 pb-4 animate-fade-up">
-        <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-300 mb-6">
-          <Shield className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
-          <span>CRYPTOGRAPHIC EVIDENCE OVER PROMISES</span>
-        </div>
-
-        <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-6xl sm:leading-tight">
-          Work you can <span className="text-teal-600 dark:text-teal-400 underline decoration-teal-300 dark:decoration-teal-600">prove</span>.
-        </h1>
-
-        <p className="mt-6 text-base text-slate-600 dark:text-slate-300 sm:text-lg leading-relaxed max-w-2xl mx-auto">
-          The trust-first collaboration platform where students solve real industry problems for locked rupee escrow, experts co-sign quality, and every milestone is provable on an immutable ledger.
-        </p>
-
-        {/* 3 Main CTAs */}
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button size="lg" asChild className="font-bold">
-            <Link href="/signup?role=student" className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4" />
-              <span>Join as Student</span>
-            </Link>
-          </Button>
-
-          <Button size="lg" variant="secondary" asChild className="font-bold">
-            <Link href="/signup?role=expert" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-              <span>Join as Expert</span>
-            </Link>
-          </Button>
-
-          <Button size="lg" variant="outline" asChild className="font-bold">
-            <Link href="/signup?role=sponsor" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              <span>Post a Problem</span>
-            </Link>
-          </Button>
-        </div>
-
-        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
-          <Link href="/login" className="text-teal-600 hover:underline dark:text-teal-400 font-semibold flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            <span>Already evaluating? Use One-Click Quick Login</span>
-          </Link>
-        </div>
+    <div className="w-full flex flex-col space-y-8 select-none">
+      {/* 1. HERO SECTION WITH ATMOSPHERIC DOT FIELD, SEAL CENTERPIECE, BEAM & TANDEM LAYOUT */}
+      <section id="hero-top" className="relative w-full overflow-hidden bg-[#050508] border-b border-white/[0.08]">
+        <HeroScene />
+        <HeroTandemLayout onOpenLedger={fetchLedger} ledgerCount={ledger.count || 24} />
       </section>
 
-      {/* 2. DEMO DATA STATS STRIP */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 dark:border-slate-800">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Platform Telemetry
-          </span>
-          <Badge variant="subtle" className="text-[10px] font-bold">
-            Demo Data (Synthetic Local Sandbox)
-          </Badge>
-        </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 text-center">
-          <div className="p-3">
-            <div className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-              ₹6,00,000
+      {/* 2. CORE THESIS STATEMENT SECTION */}
+      <StatementSection />
+
+      {/* 3. FOUR ENGAGEMENT MODELS SHELF */}
+      <EngagementShelfSection />
+
+      {/* 4. FOUR PROTOCOL DETAIL ROOMS */}
+      <DetailRoomsSection />
+
+      {/* 5. FOUR NON-NEGOTIABLE PRINCIPLES */}
+      <PrinciplesSection />
+
+      {/* 6. FIVE EDITORIAL ROLE CARDS */}
+      <RolesJournalSection />
+
+      {/* 7. LIVE LEDGER VERIFIER & REHEARSAL SANDBOX WIDGET */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 w-full pt-12">
+        <section
+          id="ledger-verifier"
+          className="rounded-3xl border border-white/10 bg-[#0c0d14]/90 p-8 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] space-y-8 backdrop-blur-xl relative overflow-hidden"
+        >
+          {/* Subtle ambient light */}
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
+
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-900 via-[#1a1338] to-violet-950 border border-violet-400/40 text-violet-300 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                <Shield className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl sm:text-2xl font-light tracking-tight text-white">
+                    Live Platform Diary Verifier
+                  </h2>
+                  <span className="font-mono text-[10px] tracking-widest uppercase px-2.5 py-0.5 rounded-full border border-violet-400/40 bg-violet-950/40 text-violet-300">
+                    SHA-256 CHAINED
+                  </span>
+                </div>
+                <p className="text-xs text-[#8b8ea0] mt-1 font-mono">
+                  Audits every block from Genesis to Head in real time via <code>/api/ledger/verify</code>.
+                </p>
+              </div>
             </div>
-            <div className="text-xs text-slate-500 mt-1">Total Seed Escrow</div>
+
+            <Button
+              variant="default"
+              size="default"
+              onClick={fetchLedger}
+              disabled={refreshing}
+              className="rounded-full font-mono text-xs tracking-widest uppercase"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              <span>Verify Diary Now</span>
+            </Button>
           </div>
-          <div className="p-3 border-l border-slate-100 dark:border-slate-800">
-            <div className="text-2xl font-black text-teal-600 dark:text-teal-400 sm:text-3xl">
-              {ledger.count || 24}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">Verified Ledger Blocks</div>
+
+          {/* Verification Status Result Display */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#050508] p-6 font-mono text-xs shadow-inner">
+            {ledger.status === "ok" ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-bold text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shadow-[0_0_8px_#34d399]" />
+                  <span>CRYPTOGRAPHIC INTEGRITY VERIFIED (OK 200)</span>
+                </div>
+                <div className="text-slate-300">
+                  <strong className="text-white">Sequential Blocks:</strong> {ledger.count} verified blocks
+                </div>
+                <div className="truncate text-slate-400">
+                  <strong className="text-white">Head Entry Hash:</strong> {ledger.head_hash || "Genesis"}
+                </div>
+              </div>
+            ) : ledger.status === "tampered" ? (
+              <div className="space-y-2 text-rose-400">
+                <div className="flex items-center gap-2 text-sm font-bold">
+                  <AlertTriangle className="h-4 w-4 text-rose-400" />
+                  <span>INTEGRITY FAILURE: BROKEN AT ENTRY #{ledger.broken_seq}</span>
+                </div>
+                <div className="text-slate-300">{ledger.reason}</div>
+              </div>
+            ) : (
+              <div className="text-slate-400">Auditing cryptographic chain...</div>
+            )}
           </div>
-          <div className="p-3 border-l border-slate-100 dark:border-slate-800">
-            <div className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
-              100%
-            </div>
-            <div className="text-xs text-slate-500 mt-1">On-Time Escrow Payouts</div>
-          </div>
-          <div className="p-3 border-l border-slate-100 dark:border-slate-800">
-            <div className="text-2xl font-black text-amber-500 sm:text-3xl">
-              4.9 / 5.0
-            </div>
-            <div className="text-xs text-slate-500 mt-1">Average Star Integrity</div>
-          </div>
-        </div>
-      </section>
 
-      {/* 3. THREE PROBLEM CARDS */}
-      <section className="space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-            The Three Fatal Crises in Academic & Contract Work
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
-            Why traditional internships, freelance portals, and university capstones fail students, mentors, and employers.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card className="border-t-4 border-t-rose-500">
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <Badge variant="flagged">CRISIS 1</Badge>
-                <Coins className="h-5 w-5 text-rose-500" />
-              </div>
-              <CardTitle className="text-lg">No Pay (Ghost Work)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              <p>
-                Students deliver code, models, and prototypes only to face stalled invoices, arbitrary scope inflation, or non-payment.
-              </p>
-              <div className="rounded-xl bg-slate-50 p-3 font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                <strong>VOUCH Solution:</strong> Upfront rupee locker escrow. Milestones are funded in full before contributor code begins.
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-amber-500">
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <Badge variant="gold">CRISIS 2</Badge>
-                <Award className="h-5 w-5 text-amber-500" />
-              </div>
-              <CardTitle className="text-lg">No Credit (Attribution Erasure)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              <p>
-                Student breakthrough contributions and mentor guidance are swept under generic NDAs and corporate copyright with zero public attribution.
-              </p>
-              <div className="rounded-xl bg-slate-50 p-3 font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                <strong>VOUCH Solution:</strong> Bilateral charters and cryptographic ledger entries verify exact contributor weights and co-authorship.
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-teal-500">
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <Badge variant="verified">CRISIS 3</Badge>
-                <Shield className="h-5 w-5 text-teal-600" />
-              </div>
-              <CardTitle className="text-lg">No Proof (Resume Hallucination)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              <p>
-                Recruiters cannot tell genuine engineering skill from generative AI fluff, inflated claims, or plagiarized course repositories.
-              </p>
-              <div className="rounded-xl bg-slate-50 p-3 font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                <strong>VOUCH Solution:</strong> Immutable SHA-256 diary of closed projects, peer reviews, code hashes, and verifiable star history.
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* 4. SIX-STEP HOW IT WORKS FLOW */}
-      <section className="space-y-6">
-        <div className="text-center space-y-2">
-          <Badge variant="subtle" className="text-xs uppercase">
-            Deterministic Protocol
-          </Badge>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-            How It Works in 6 Steps
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-            From problem brief to verified rupee payout — mathematically enforced at every transition.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              step: "01",
-              title: "Post Problem",
-              desc: "Sponsor specifies public summary, milestones, confidential brief, and engagement model (funded or knowledge-sharing).",
-              icon: FileCheck2,
-            },
-            {
-              step: "02",
-              title: "Objective Match",
-              desc: "Algorithmic pairing analyzes verified skills, past project track records, and availability with transparent pros & cons.",
-              icon: Layers,
-            },
-            {
-              step: "03",
-              title: "Agree Charter",
-              desc: "Contributors and lead expert review scope, IP assignment, and rupee split rules. Signatures log to the ledger.",
-              icon: Scale,
-            },
-            {
-              step: "04",
-              title: "Locker Escrow",
-              desc: "Milestone funds lock in rupee escrow. Brief and datasets unlock server-side strictly after charter acceptance.",
-              icon: Lock,
-            },
-            {
-              step: "05",
-              title: "Guided Work",
-              desc: "Students build solutions in the workspace, mentors conduct technical reviews, and similarity algorithms verify originality.",
-              icon: Clock,
-            },
-            {
-              step: "06",
-              title: "Paid & Credited",
-              desc: "Milestone approval releases exact rupee payouts without rounding leak. Ratings update and permanently bind to diary.",
-              icon: Coins,
-            },
-          ].map((s) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.step}
-                className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl font-black text-teal-600 dark:text-teal-400">
-                      {s.step}
-                    </span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {s.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {s.desc}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 5. FOUR FEATURE CARDS */}
-      <section className="space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-            Architectural Guarantees
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Four pillars that make VOUCH tamper-evident and audit-grade.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-                  <Shield className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">1. Provable Diary</CardTitle>
-                  <CardDescription>SHA-256 Cryptographic Chaining</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Every action — user signup, charter acceptance, milestone approval, review submission, and escrow release — is appended as a sequenced entry linked to the previous block's SHA-256 hash. Any retroactive modification breaks the entire chain immediately.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-                  <Lock className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">2. Safe Escrow Locker</CardTitle>
-                  <CardDescription>Upfront Guaranteed Capital</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Money never leaves the company wallet into limbo. It locks into milestone lockers with explicit exit clauses: if a sponsor withdraws without cause, a 10% compensation fee is charged and pro-rata credit is awarded.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">3. Stars Backed by Receipts</CardTitle>
-                  <CardDescription>Mathematical Trust Signals</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Ratings are updated strictly via closed project reviews across 5 explicit dimensions. The "Why did my rating change?" timeline gives exact ledger sequence references explaining every fractional delta.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
-                  <PlayCircle className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">4. Rehearsal Engine</CardTitle>
-                  <CardDescription>One-Click Judge Scenarios</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Designed specifically for competitive evaluations: simulate tampering, trigger milestone disputes, test conflict-of-interest blocks, and reset demo data instantaneously with a single click.
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* 6. LIVE VERIFIER WIDGET */}
-      <section className="rounded-3xl border border-teal-200/80 bg-gradient-to-br from-teal-50/60 via-white to-teal-50/20 p-8 shadow-sm dark:border-teal-900/60 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/20">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-sm dark:bg-teal-500">
-              <Shield className="h-6 w-6" />
-            </div>
-            <div>
+          {/* REHEARSAL ENGINE SCENARIO SELECTOR */}
+          <div id="rehearsal-engine" className="pt-6 border-t border-white/[0.08]">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Live Platform Diary Verifier
-                </h2>
-                <Badge variant="verified">SHA-256 Chained</Badge>
+                <Terminal className="h-4 w-4 text-violet-400" />
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                  Rehearsal Engine Interactive Scenarios
+                </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Audits every block from Genesis to Head in real time via <code>/api/ledger/verify</code>.
-              </p>
+              <span className="text-[11px] font-mono text-[#8b8ea0]">
+                Click scenario to redirect beam & trigger dot wave
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  fetchLedger();
+                  toast.success("Verifying intact ledger chain — calm green wave fired!");
+                }}
+                className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 text-left hover:border-emerald-500/60 transition-all cursor-pointer shadow-sm group"
+              >
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-300 font-mono">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Scenario 1: Verified Chain</span>
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400 font-sans leading-relaxed">
+                  Normal consensus: sends serene emerald wave through dot field.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSimulateTamper}
+                className="p-4 rounded-2xl border border-rose-500/30 bg-rose-950/20 text-left hover:border-rose-500/60 transition-all cursor-pointer shadow-sm group"
+              >
+                <div className="flex items-center gap-2 text-xs font-bold text-rose-300 font-mono">
+                  <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Scenario 2: Tamper Entry #2</span>
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400 font-sans leading-relaxed">
+                  Alters past DB record: sends violent red wave with visible fracture.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetData}
+                className="p-4 rounded-2xl border border-violet-500/30 bg-violet-950/20 text-left hover:border-violet-500/60 transition-all cursor-pointer shadow-sm group"
+              >
+                <div className="flex items-center gap-2 text-xs font-bold text-violet-300 font-mono">
+                  <RotateCcw className="h-3.5 w-3.5 text-violet-400" />
+                  <span>Scenario 3: Reset Ledger</span>
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400 font-sans leading-relaxed">
+                  Restores clean state, re-verifies chain, and realigns beam.
+                </p>
+              </button>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchLedger}
-            disabled={refreshing}
-            className="rounded-xl font-semibold"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            <span>Verify the diary now</span>
-          </Button>
-        </div>
+        </section>
+      </div>
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 font-mono text-xs shadow-inner dark:border-slate-800 dark:bg-slate-950">
-          {ledger.status === "ok" ? (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>CRYPTOGRAPHIC INTEGRITY VERIFIED (OK)</span>
-              </div>
-              <div className="text-slate-600 dark:text-slate-400">
-                <strong>Sequential Blocks:</strong> {ledger.count} verified blocks
-              </div>
-              <div className="truncate text-slate-500 dark:text-slate-500">
-                <strong>Head Entry Hash:</strong> {ledger.head_hash || "Genesis"}
-              </div>
-            </div>
-          ) : ledger.status === "tampered" ? (
-            <div className="space-y-1.5 text-rose-600 dark:text-rose-400">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <AlertTriangle className="h-4 w-4" />
-                <span>INTEGRITY FAILURE: BROKEN AT ENTRY #{ledger.broken_seq}</span>
-              </div>
-              <div>{ledger.reason}</div>
-            </div>
-          ) : (
-            <div className="text-slate-400">Auditing cryptographic chain...</div>
-          )}
-        </div>
-      </section>
-
-      {/* 7. FAQ ACCORDION */}
-      <section className="space-y-6 max-w-3xl mx-auto">
+      {/* 8. FAQ ACCORDION SECTION */}
+      <section className="space-y-6 max-w-4xl mx-auto px-4 sm:px-8 pt-16 pb-8 w-full">
         <div className="text-center space-y-2">
-          <Badge variant="subtle" className="text-xs uppercase">
-            Questions & Answers
-          </Badge>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+            <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-violet-300 font-semibold">
+              FAQ · TECHNICAL & LEGAL
+            </span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extralight tracking-tight text-white">
             Frequently Asked Questions
           </h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 pt-4">
           {FAQS.map((faq, idx) => {
             const isOpen = activeFaq === idx;
             return (
               <div
                 key={idx}
-                className="rounded-2xl border border-slate-200 bg-white transition dark:border-slate-800 dark:bg-slate-900"
+                className="rounded-2xl border border-white/[0.08] bg-[#0c0d12]/80 backdrop-blur-md transition"
               >
                 <button
                   type="button"
                   onClick={() => toggleFaq(idx)}
-                  className="flex w-full items-center justify-between p-5 text-left text-sm font-bold text-slate-900 dark:text-white focus:outline-none"
+                  className="flex w-full items-center justify-between p-5 text-left text-sm font-medium text-white focus:outline-none cursor-pointer"
                 >
-                  <span>{faq.q}</span>
+                  <span className="font-sans">{faq.q}</span>
                   <ChevronDown
-                    className={`h-4 w-4 text-slate-400 transition-transform ${
-                      isOpen ? "rotate-180 text-teal-600" : ""
+                    className={`h-4 w-4 text-violet-400 transition-transform duration-200 ${
+                      isOpen ? "rotate-180" : ""
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="px-5 pb-5 pt-1 text-xs text-slate-300 leading-relaxed border-t border-white/[0.06] font-sans font-light">
                     {faq.a}
                   </div>
                 )}
@@ -500,33 +311,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 8. FINAL CTA STRIP */}
-      <section className="rounded-3xl border border-teal-300 bg-teal-600 p-8 text-center text-white shadow-xl dark:border-teal-800 dark:bg-teal-950 sm:p-12">
-        <h2 className="text-2xl font-black sm:text-3xl">
-          Ready to prove your work on the immutable ledger?
-        </h2>
-        <p className="mt-3 text-xs sm:text-sm text-teal-100 max-w-xl mx-auto">
-          Explore open industry problems, review charter terms, and start building cryptographic evidence of your contributions today.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Button
-            size="lg"
-            variant="secondary"
-            asChild
-            className="font-bold text-teal-900"
-          >
-            <Link href="/open-problems">Explore Open Problems</Link>
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            asChild
-            className="font-bold border-white/40 text-white hover:bg-white/10"
-          >
-            <Link href="/pricing">View Pricing & Split Math</Link>
-          </Button>
-        </div>
-      </section>
+      {/* 9. CLOSING CTA SECTION */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 w-full pb-16">
+        <section className="rounded-3xl border border-violet-400/30 bg-gradient-to-b from-[#0e0d1a] to-[#08070e] p-10 sm:p-14 text-center shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-violet-400/15 blur-3xl pointer-events-none" />
+
+          <h2 className="text-3xl sm:text-5xl font-extralight tracking-tight text-white leading-tight">
+            Ready to prove your work on the{" "}
+            <span className="text-violet-300 font-light drop-shadow-[0_0_20px_rgba(168,85,247,0.7)]">
+              immutable ledger
+            </span>
+            ?
+          </h2>
+
+          <p className="mt-4 text-xs sm:text-sm text-[#8b8ea0] max-w-xl mx-auto font-light leading-relaxed">
+            Explore open problems, review charter terms, and build verified cryptographic evidence of your engineering contributions.
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Button
+              size="lg"
+              asChild
+              className="font-mono text-xs tracking-widest uppercase"
+            >
+              <Link href="/open-problems">Explore Open Problems</Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="font-mono text-xs tracking-widest uppercase"
+            >
+              <Link href="/pricing">View Pricing & Split Math</Link>
+            </Button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

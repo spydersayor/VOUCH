@@ -72,11 +72,12 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
   else if (role === "admin") items = adminItems;
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-      <div className="mb-4 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-        {role.toUpperCase()} WORKSPACE
+    <aside className="w-64 flex-shrink-0 border-r border-white/[0.08] bg-[#0c0d12]/90 backdrop-blur-xl p-4 min-h-screen">
+      <div className="mb-5 px-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300/80 flex items-center gap-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+        <span>{role.toUpperCase()} WORKSPACE</span>
       </div>
-      <nav className="space-y-1">
+      <nav className="space-y-1.5">
         {items.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -85,18 +86,18 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                "flex items-center justify-between rounded-xl px-3.5 py-2.5 font-mono text-xs tracking-wider transition-all",
                 isActive
-                  ? "bg-teal-500/10 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
+                  ? "bg-violet-950/40 text-white border border-violet-400/40 shadow-[0_0_12px_rgba(168,85,247,0.2)] font-semibold"
+                  : "text-[#8b8ea0] hover:bg-white/[0.04] hover:text-white border border-transparent"
               )}
             >
-              <div className="flex items-center gap-2.5">
-                <Icon className={cn("h-4 w-4", isActive ? "text-teal-600 dark:text-teal-400" : "text-slate-400")} />
+              <div className="flex items-center gap-3">
+                <Icon className={cn("h-4 w-4", isActive ? "text-violet-300" : "text-[#5c5c68]")} />
                 <span>{item.label}</span>
               </div>
               {item.badge && (
-                <span className="rounded-full bg-teal-100 px-1.5 py-0.5 text-[9px] font-bold text-teal-800 dark:bg-teal-900/60 dark:text-teal-200">
+                <span className="rounded-full border border-violet-400/30 bg-violet-950/40 px-2 py-0.5 text-[9px] font-mono font-bold text-violet-300 uppercase">
                   {item.badge}
                 </span>
               )}
