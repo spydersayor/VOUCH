@@ -50,5 +50,7 @@ SPONSOR_WITHDRAWAL_COMPENSATION_PCT = 0.10  # 10% extra charged to sponsor walle
 SIMILARITY_SHINGLE_SIZE = 3
 SIMILARITY_FLAG_THRESHOLD = 0.40  # Jaccard index >= 0.40 flags for review
 
+import os
+
 # Database file
-DB_PATH = "vouch.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "vouch.db")
