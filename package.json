@@ -1,0 +1,12 @@
+{
+  "name": "vouch-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "python -m uvicorn backend.main:app --reload --port 8000",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test:backend": "python -m pytest -v",
+    "seed": "python -m backend.seed"
+  }
+}
