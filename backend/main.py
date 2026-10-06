@@ -1523,6 +1523,7 @@ async def get_student_applications(
             """
             SELECT pm.id, pm.project_id, pm.role, pm.status as member_status, pm.joined_at,
                    p.title, p.public_summary, p.budget, p.engagement_model, p.status as project_status,
+                   p.final_outcome,
                    u.name as sponsor_name,
                    c.version as charter_version
             FROM project_members pm

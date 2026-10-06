@@ -30,25 +30,25 @@ def get_authenticated_client(email: str, password: str = "Password123!") -> Test
 
 
 def test_non_members_get_403_for_workspace():
-    """Server-side RBAC: only accepted members, sponsor, and admin can access workspace; others get 403."""
-    # Student C is NOT a member of proj_retinopathy
+    """Server-side RBAC: only accepted members, sponsor, and admin can access workspace; unaccepted members get 403."""
+    # Student C is invited but has NOT accepted charter yet -> 403 Forbidden
     student_c_client = get_authenticated_client("student.c@vouch.local")
-    res = student_c_client.get("/api/projects/proj_retinopathy/workspace")
-    assert res.status_code == 403
-    assert "Forbidden" in res.json()["detail"]
+    res_c = student_c_client.get("/api/projects/proj_retinopathy/workspace")
+    assert res_c.status_code == 403
+    assert "Forbidden" in res_c.json()["detail"]
 
-    # Student A is NOT an accepted member initially
+    # Student A IS an accepted member with charter accepted -> 200 OK
     student_a_client = get_authenticated_client("student.a@vouch.local")
     res_a = student_a_client.get("/api/projects/proj_retinopathy/workspace")
-    assert res_a.status_code == 403
+    assert res_a.status_code == 200
+    data = res_a.json()
+    assert data["project"]["id"] == "proj_retinopathy"
+    assert len(data["members"]) >= 3
 
-    # Student B IS an accepted member
+    # Student B IS an accepted member -> 200 OK
     student_b_client = get_authenticated_client("student.b@vouch.local")
     res_b = student_b_client.get("/api/projects/proj_retinopathy/workspace")
     assert res_b.status_code == 200
-    data = res_b.json()
-    assert data["project"]["id"] == "proj_retinopathy"
-    assert len(data["members"]) >= 2
 
     # Sponsor can access
     sponsor_client = get_authenticated_client("sponsor@vouch.local")
@@ -325,3 +325,77 @@ def test_every_action_writes_to_hash_chained_ledger():
         actions = [e["action"] for e in tl_data["events"]]
         assert "FILE_UPLOADED" in actions
         assert "PROJECT_CHAT_MESSAGE" in actions
+
+
+def test_student_applications_active_and_completed_sections():
+    """
+    Student A sees active projects under Active with charter_accepted == True,
+    and past projects under Completed with project_status == 'closed' and a final outcome.
+    """
+    student_a_client = get_authenticated_client("student.a@vouch.local")
+    res = student_a_client.get("/api/student/applications")
+    assert res.status_code == 200
+    apps = res.json()["applications"]
+
+    active_apps = [a for a in apps if a["project_status"] != "closed"]
+    completed_apps = [a for a in apps if a["project_status"] == "closed"]
+
+    # Active apps check: proj_retinopathy and proj_indic_nlp
+    active_ids = {a["project_id"] for a in active_apps}
+    assert "proj_retinopathy" in active_ids
+    assert "proj_indic_nlp" in active_ids
+
+    retino_app = next(a for a in active_apps if a["project_id"] == "proj_retinopathy")
+    assert retino_app["budget"] == 100000
+    assert retino_app["charter_accepted"] is True
+
+    nlp_app = next(a for a in active_apps if a["project_id"] == "proj_indic_nlp")
+    assert nlp_app["engagement_model"] == "knowledge-sharing"
+    assert nlp_app["charter_accepted"] is True
+
+    # Completed apps check: proj_past_*
+    assert len(completed_apps) >= 2
+    for ca in completed_apps:
+        assert ca["project_status"] == "closed"
+        assert ca["final_outcome"] is not None and len(ca["final_outcome"]) > 0
+
+
+def test_workspace_of_closed_project_not_offered():
+    """The workspace of a closed project is closed/forbidden and cannot be accessed as an entry point."""
+    student_a_client = get_authenticated_client("student.a@vouch.local")
+    res = student_a_client.get("/api/projects/proj_past_1/workspace")
+    assert res.status_code == 403
+    detail = res.json()["detail"].lower()
+    assert "closed" in detail
+    assert "no longer active" in detail
+
+    # Even sponsor cannot open workspace of closed project
+    sponsor_client = get_authenticated_client("sponsor@vouch.local")
+    res_sp = sponsor_client.get("/api/projects/proj_past_1/workspace")
+    assert res_sp.status_code == 403
+
+
+def test_active_project_workspace_opens_for_accepted_members():
+    """
+    Workspace of an active project opens for accepted members (Student A, Student B, Expert A, Sponsor),
+    and is strictly 403 for unaccepted members (Student C).
+    """
+    for email in ["student.a@vouch.local", "student.b@vouch.local", "expert.a@vouch.local", "sponsor@vouch.local"]:
+        client = get_authenticated_client(email)
+        res = client.get("/api/projects/proj_retinopathy/workspace")
+        assert res.status_code == 200, f"Expected 200 for {email} but got {res.status_code}: {res.text}"
+        data = res.json()
+        assert data["project"]["id"] == "proj_retinopathy"
+
+    # Also test active non-monetary project workspace opens for accepted members
+    client = get_authenticated_client("student.a@vouch.local")
+    res_nlp = client.get("/api/projects/proj_indic_nlp/workspace")
+    assert res_nlp.status_code == 200
+    assert res_nlp.json()["project"]["id"] == "proj_indic_nlp"
+
+    # Student C is unaccepted (invited, charter not accepted) -> 403 Forbidden
+    student_c_client = get_authenticated_client("student.c@vouch.local")
+    res_c = student_c_client.get("/api/projects/proj_retinopathy/workspace")
+    assert res_c.status_code == 403
+
+

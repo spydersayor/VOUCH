@@ -70,6 +70,12 @@ def check_workspace_access(project_id: str, user: Dict[str, Any], conn) -> Dict[
     if not proj:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    if proj["status"] == "closed":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: This project is closed and archived. The workspace is no longer active. Please view the closed charter and timeline.",
+        )
+
     if user["role"] == "admin":
         return dict(proj)
 
@@ -87,6 +93,19 @@ def check_workspace_access(project_id: str, user: Dict[str, Any], conn) -> Dict[
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden: You must be an accepted project member, the sponsor, or an admin to access this workspace.",
         )
+
+    # Check charter acceptance
+    curr_charter = conn.execute("SELECT version FROM charters WHERE project_id = ? AND is_current = 1", (project_id,)).fetchone()
+    if curr_charter:
+        acc = conn.execute(
+            "SELECT 1 FROM charter_acceptances WHERE project_id = ? AND user_id = ? AND version = ?",
+            (project_id, user["id"], curr_charter["version"]),
+        ).fetchone()
+        if not acc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden: You must accept the current charter version before entering the workspace.",
+            )
 
     return dict(proj)
 

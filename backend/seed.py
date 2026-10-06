@@ -140,20 +140,20 @@ def seed_database():
 
         # Sample initial notifications for all roles
         seed_notifs = [
-            ("notif_1", "usr_student_a", "Charter v1 Ready for Review", "Apex Health AI published Charter v1 for Diabetic Retinopathy. Please review terms and accept.", "/charters/proj_retinopathy", 0),
-            ("notif_2", "usr_student_a", "Milestone Payout Credited", "Milestone M1 on Past Project released. Rs 25,783 credited to wallet.", "/student/earnings", 1),
+            ("notif_1", "usr_student_a", "Workspace Access Granted", "You are an accepted collaborator on Diabetic Retinopathy. Enter the workspace.", "/projects/proj_retinopathy/workspace", 0),
+            ("notif_2", "usr_student_a", "Milestone Payout Credited", "Milestone M1 on Past Project released. Rs 25,783 credited to wallet.", "/projects/proj_past_1/timeline", 1),
             ("notif_3", "usr_student_a", "Star Rating Updated", "Composite rating updated to 4.6 ⭐ based on peer review.", "/users/usr_student_a", 1),
             ("notif_4", "usr_student_b", "Charter v1 Ready for Review", "Review terms for Diabetic Retinopathy project.", "/charters/proj_retinopathy", 0),
-            ("notif_5", "usr_student_b", "Integrity Review Cleared", "Similarity audit on Past Project 2 marked cleared by mentor.", "/student/projects", 1),
-            ("notif_6", "usr_student_c", "Welcome to VOUCH Sandbox", "Newbie Badge assigned. You have an exploration matching boost for open challenges.", "/student", 0),
+            ("notif_5", "usr_student_b", "Integrity Review Cleared", "Similarity audit on Past Project 2 marked cleared by mentor.", "/projects/proj_past_2/timeline", 1),
+            ("notif_6", "usr_student_c", "Invitation Received: Review Charter", "You have been invited to collaborate on Diabetic Retinopathy. Review charter and accept.", "/charters/proj_retinopathy", 0),
             ("notif_7", "usr_expert_a", "Co-Sign Charter Request", "Apex Health AI invites you as Lead Expert on Diabetic Retinopathy.", "/charters/proj_retinopathy", 0),
-            ("notif_8", "usr_expert_a", "Code Review Pending", "Student A submitted Milestone 1 code artifacts for technical verification.", "/expert/reviews", 0),
-            ("notif_9", "usr_expert_a", "Expert Honorarium Credited", "Rs 25,500 milestone payout share credited to wallet.", "/expert/earnings", 1),
+            ("notif_8", "usr_expert_a", "Code Review Pending", "Student A submitted Milestone 1 code artifacts for technical verification.", "/projects/proj_retinopathy/workspace", 0),
+            ("notif_9", "usr_expert_a", "Expert Honorarium Credited", "Rs 25,500 milestone payout share credited to wallet.", "/projects/proj_retinopathy/timeline", 1),
             ("notif_10", "usr_expert_b", "Conflict of Interest Recorded", "Your declared affiliation with RetinaVision Labs is logged to the ledger.", "/expert/conflicts", 1),
             ("notif_11", "usr_sponsor", "Escrow Locker Funded", "Rs 1,00,000 locked for Diabetic Retinopathy project.", "/sponsor/wallet", 1),
-            ("notif_12", "usr_sponsor", "Contributor Applied", "Student A submitted qualifications for Diabetic Retinopathy.", "/charters/proj_retinopathy", 0),
-            ("notif_13", "usr_admin", "Ledger Integrity Verified", "Cryptographic hash chain validated intact across all blocks.", "/admin/ledger", 0),
-            ("notif_14", "usr_admin", "Dispute Queue Clean", "Zero active disputes currently pending arbitration.", "/admin/disputes", 1),
+            ("notif_12", "usr_sponsor", "Contributor Applied", "Student A submitted qualifications for Diabetic Retinopathy.", "/projects/proj_retinopathy/workspace", 0),
+            ("notif_13", "usr_admin", "Ledger Integrity Verified", "Cryptographic hash chain validated intact across all blocks.", "/projects/proj_retinopathy/timeline", 0),
+            ("notif_14", "usr_admin", "Dispute Queue Clean", "Zero active disputes currently pending arbitration.", "/admin", 1),
         ]
         for n_id, u_id, title, msg, link, read_status in seed_notifs:
             conn.execute(
@@ -513,11 +513,13 @@ def seed_database():
     )
 
     with get_db() as conn:
-        # Seed accepted members for proj_retinopathy
+        # Seed accepted members for proj_retinopathy (Student A & B accepted; Student C invited/unaccepted)
         members_retino = [
             ("pm_retino_sponsor", proj_retino_id, "usr_sponsor", "sponsor", "accepted", 0.0),
             ("pm_retino_expert_a", proj_retino_id, "usr_expert_a", "expert", "accepted", 0.0),
-            ("pm_retino_student_b", proj_retino_id, "usr_student_b", "student", "accepted", 0.5),
+            ("pm_retino_student_a", proj_retino_id, "usr_student_a", "student", "accepted", 0.5),
+            ("pm_retino_student_b", proj_retino_id, "usr_student_b", "student", "accepted", 0.3),
+            ("pm_retino_student_c", proj_retino_id, "usr_student_c", "student", "invited", 0.2),
         ]
         for pm in members_retino:
             conn.execute(
@@ -528,10 +530,10 @@ def seed_database():
                 pm,
             )
 
-        # Seed charter acceptances for members (usr_student_a left unaccepted so test_core brief gating works)
+        # Seed charter acceptances for members (Sponsor, Expert A, Student A & B accepted; Student C left unaccepted so demo shows accept flow)
         retino_charter = conn.execute("SELECT id FROM charters WHERE project_id = ? AND is_current = 1", (proj_retino_id,)).fetchone()
         charter_retino_id = retino_charter["id"] if retino_charter else "charter_proj_retinopathy_v1"
-        for u_id in ["usr_expert_a", "usr_student_b"]:
+        for u_id in ["usr_sponsor", "usr_expert_a", "usr_student_a", "usr_student_b"]:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO charter_acceptances (id, charter_id, project_id, user_id, version, engagement_model_accepted)
@@ -549,10 +551,10 @@ def seed_database():
             INSERT INTO project_files (id, project_id, uploader_id, filename, file_size, sha256_hash, watermark_text)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            ("file_retino_1", proj_retino_id, "usr_student_b", "fundus_edge_benchmark.py", len(sample_code), sample_hash, "VOUCH_SECURE_WATERMARK_ROHAN"),
+            ("file_retino_1", proj_retino_id, "usr_student_a", "fundus_edge_benchmark.py", len(sample_code), sample_hash, "VOUCH_SECURE_WATERMARK_MAYA"),
         )
         record_ledger_entry(
-            actor="usr_student_b",
+            actor="usr_student_a",
             on_behalf_of=proj_retino_id,
             action="FILE_UPLOADED",
             payload={"project_id": proj_retino_id, "filename": "fundus_edge_benchmark.py", "sha256_hash": sample_hash},
@@ -565,14 +567,14 @@ def seed_database():
             INSERT INTO project_messages (id, project_id, sender_id, sender_name, sender_role, content)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            ("msg_retino_1", proj_retino_id, "usr_expert_a", "Dr. Aris Thorne (Expert A)", "expert", "Welcome Rohan. Milestone 1 focus is TFLite INT8 quantization baseline."),
+            ("msg_retino_1", proj_retino_id, "usr_expert_a", "Dr. Aris Thorne (Expert A)", "expert", "Welcome Maya and Rohan. Milestone 1 focus is TFLite INT8 quantization baseline."),
         )
         conn.execute(
             """
             INSERT INTO project_messages (id, project_id, sender_id, sender_name, sender_role, content)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            ("msg_retino_2", proj_retino_id, "usr_student_b", "Rohan Verma (Student B)", "student", "Uploaded the preprocessing pipeline script. Calibration runs are underway on the edge testbench."),
+            ("msg_retino_2", proj_retino_id, "usr_student_a", "Maya Lin (Student A)", "student", "Uploaded the preprocessing pipeline script. Calibration runs are underway on the edge testbench."),
         )
 
         # Seed sample submission for Milestone 1
@@ -583,7 +585,7 @@ def seed_database():
             INSERT INTO submissions (
                 id, project_id, milestone_id, author_id, title, content, file_hash,
                 ai_used, ai_share_pct, ai_declaration, integrity_status, similarity_score, status
-            ) VALUES (?, ?, 'ms_retino_1', 'usr_student_b', ?, ?, ?, 1, 15.0, ?, 'clean', 0.05, 'submitted')
+            ) VALUES (?, ?, 'ms_retino_1', 'usr_student_a', ?, ?, ?, 1, 15.0, ?, 'clean', 0.05, 'submitted')
             """,
             (
                 "sub_retino_m1",
@@ -595,9 +597,10 @@ def seed_database():
             ),
         )
 
-        # Seed accepted members for Indic NLP (usr_student_a omitted so student_a can apply in test_core_story)
+        # Seed accepted members for active non-monetary Indic NLP
         members_nlp = [
             ("pm_nlp_sponsor", proj_nlp_id, "usr_sponsor", "sponsor", "accepted", 0.0),
+            ("pm_nlp_student_a", proj_nlp_id, "usr_student_a", "student", "accepted", 0.5),
             ("pm_nlp_student_b", proj_nlp_id, "usr_student_b", "student", "accepted", 0.5),
             ("pm_nlp_expert_a", proj_nlp_id, "usr_expert_a", "expert", "accepted", 0.0),
         ]
@@ -608,6 +611,32 @@ def seed_database():
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 pm,
+            )
+
+        # Seed charter acceptances for active non-monetary Indic NLP
+        nlp_charter = conn.execute("SELECT id FROM charters WHERE project_id = ? AND is_current = 1", (proj_nlp_id,)).fetchone()
+        charter_nlp_id = nlp_charter["id"] if nlp_charter else f"charter_{proj_nlp_id}_v1"
+        for u_id in ["usr_sponsor", "usr_expert_a", "usr_student_a", "usr_student_b"]:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO charter_acceptances (id, charter_id, project_id, user_id, version, engagement_model_accepted)
+                VALUES (?, ?, ?, ?, 1, 1)
+                """,
+                (f"acc_nlp_{u_id}", charter_nlp_id, proj_nlp_id, u_id),
+            )
+
+        # Seed milestones for active non-monetary Indic NLP
+        m_nlp = [
+            ("ms_nlp_1", proj_nlp_id, 1, "Clinical Vocabulary Extraction & Lexicon Standardization", "Cross-lingual terminology mapping across Indic dialects", 0, "in_progress"),
+            ("ms_nlp_2", proj_nlp_id, 2, "Zero-shot NER Benchmarking & Open Dataset Release", "Validation of multilingual clinical embeddings", 0, "pending"),
+        ]
+        for m in m_nlp:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO milestones (id, project_id, sequence, title, description, budget, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                m,
             )
 
 

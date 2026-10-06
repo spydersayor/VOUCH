@@ -151,7 +151,7 @@ def test_candidate_con_reply_access_control():
 
 def test_brief_hidden_before_charter_acceptance():
     client = TestClient(app)
-    login_as(client, "student.a@vouch.local")
+    login_as(client, "student.c@vouch.local")
 
     # Brief is 403 before acceptance
     resp = client.get("/api/projects/proj_retinopathy/brief")
@@ -294,7 +294,7 @@ def test_lifecycle_ledger_entries_and_notifications():
     assert resp.status_code == 200
 
     # 2. Student applies to project
-    login_as(client, "student.a@vouch.local")
+    login_as(client, "student.c@vouch.local")
     resp = client.post(
         "/api/projects/proj_indic_nlp/apply",
         json={"role": "student", "pitch": "Experience with transformers."}
@@ -309,7 +309,7 @@ def test_lifecycle_ledger_entries_and_notifications():
         assert invite_ledger is not None
 
         apply_ledger = conn.execute(
-            "SELECT * FROM ledger WHERE action = 'PROJECT_APPLICATION_SUBMITTED' AND payload_json LIKE '%usr_student_a%'"
+            "SELECT * FROM ledger WHERE action = 'PROJECT_APPLICATION_SUBMITTED' AND payload_json LIKE '%usr_student_c%'"
         ).fetchone()
         assert apply_ledger is not None
 

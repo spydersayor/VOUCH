@@ -139,10 +139,10 @@ def test_server_side_brief_gating_and_charter_versioning(client):
     """
     project_id = "proj_retinopathy"
 
-    # 1. Log in as Student A (has not accepted charter yet)
+    # 1. Log in as Student C (has not accepted charter yet)
     client.post(
         "/api/auth/login",
-        json={"email": "student.a@vouch.local", "password": "Password123!"},
+        json={"email": "student.c@vouch.local", "password": "Password123!"},
     )
 
     # Student tries to read confidential brief -> Must be refused (403)

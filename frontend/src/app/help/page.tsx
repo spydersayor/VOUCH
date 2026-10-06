@@ -22,11 +22,32 @@ export default function HelpPage() {
           Evaluation Guide
         </Badge>
         <h1 className="text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
-          Demo Walkthrough & Judging Manual
+          Demo Walkthrough &amp; Judging Manual
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          Recommended test journeys to evaluate VOUCH's cryptographic guarantees, escrow mechanics, and role segregation.
+          Recommended test journeys to evaluate VOUCH&apos;s cryptographic guarantees, escrow mechanics, and role segregation.
         </p>
+
+        {/* Load Demo at Stage Controls */}
+        <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-teal-200 bg-teal-50/60 p-5 shadow-sm dark:border-teal-900 dark:bg-teal-950/30">
+          <div className="text-xs font-bold uppercase tracking-wider text-teal-900 dark:text-teal-200 mb-3">
+            ⚡ Quick-Jump: Load Demo at Stage
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            <Button size="sm" variant="outline" asChild className="bg-white text-xs font-semibold dark:bg-slate-900">
+              <Link href="/sponsor/post-problem">Stage: Before Posting</Link>
+            </Button>
+            <Button size="sm" variant="outline" asChild className="bg-white text-xs font-semibold dark:bg-slate-900">
+              <Link href="/sponsor/projects/proj_retinopathy">Stage: After Matching</Link>
+            </Button>
+            <Button size="sm" asChild className="bg-teal-600 text-white text-xs font-bold hover:bg-teal-700">
+              <Link href="/projects/proj_retinopathy/workspace">Stage: Mid-Project</Link>
+            </Button>
+            <Button size="sm" asChild className="bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700">
+              <Link href="/projects/proj_retinopathy/workspace">Stage: Ready for Milestone Acceptance</Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -37,7 +58,7 @@ export default function HelpPage() {
           </div>
           <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             <li>Go to <strong>Log In</strong> and select the <strong>Student</strong> role card.</li>
-            <li>Click the one-click demo chip for <strong>Student A (4.6 ⭐)</strong>.</li>
+            <li>Click the one-click demo chip for <strong>Student C (Accept Flow Demo)</strong> to test the pending charter acceptance flow (or <strong>Student A</strong> for the active workspace).</li>
             <li>Navigate to <strong>Charters to Accept</strong> on the student dashboard.</li>
             <li>Click <strong>Review & Accept Charter</strong> for the Diabetic Retinopathy project.</li>
             <li>Confirm the 2 checkboxes and click <strong>Accept Charter v1</strong>. Observe the verified ledger signature and confidential brief unlock!</li>

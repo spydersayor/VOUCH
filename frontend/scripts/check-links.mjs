@@ -497,6 +497,150 @@ async function runAudit() {
       console.log("    ✓ /charters/proj_retinopathy render & interactions passed with 0 crashes.");
       await cContext.close();
     }
+
+    // 5) Interactive checks for Student A (Dashboard & Applications)
+    console.log("  Testing Student A dashboard and applications interactive button flows...");
+    const studentASession = await loginAs("student.a@vouch.local");
+    const appAContext = await browser.newContext();
+    await appAContext.addCookies([
+      {
+        name: "vouch_session",
+        value: studentASession.cookieVal,
+        url: FRONTEND_URL,
+      },
+    ]);
+    const appAPage = await appAContext.newPage();
+    const appAErrors = setupErrorTracking(appAPage);
+
+    // 5A) Check Student A Dashboard buttons
+    await appAPage.goto(`${FRONTEND_URL}/student`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appAPage.waitForTimeout(600);
+
+    const dashWsBtn = await appAPage.$("#btn-dashboard-workspace-proj_retinopathy");
+    if (!dashWsBtn) {
+      failures.push({ route: "/student", role: "student", error: "Missing Enter Workspace button for active proj_retinopathy on student dashboard" });
+    } else {
+      await dashWsBtn.click();
+      await appAPage.waitForTimeout(600);
+      const wsCrash = await checkPageContent(appAPage, "/projects/proj_retinopathy/workspace (from student dashboard)");
+      if (wsCrash) failures.push({ route: "/projects/proj_retinopathy/workspace", role: "student", error: wsCrash });
+      console.log("    ✓ Dashboard: Clicked Enter Workspace -> successfully opened /projects/proj_retinopathy/workspace");
+    }
+
+    await appAPage.goto(`${FRONTEND_URL}/student`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appAPage.waitForTimeout(600);
+
+    const dashTlBtn = await appAPage.$("#btn-dashboard-timeline-proj_retinopathy");
+    if (!dashTlBtn) {
+      failures.push({ route: "/student", role: "student", error: "Missing Timeline button for active proj_retinopathy on student dashboard" });
+    } else {
+      await dashTlBtn.click();
+      await appAPage.waitForTimeout(600);
+      const tlCrash = await checkPageContent(appAPage, "/projects/proj_retinopathy/timeline (from student dashboard)");
+      if (tlCrash) failures.push({ route: "/projects/proj_retinopathy/timeline", role: "student", error: tlCrash });
+      console.log("    ✓ Dashboard: Clicked Timeline -> successfully opened /projects/proj_retinopathy/timeline");
+    }
+
+    // 5B) Check /student/applications for Student A
+    await appAPage.goto(`${FRONTEND_URL}/student/applications`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appAPage.waitForTimeout(600);
+
+    // Verify Active section and click Enter Workspace
+    const enterWsBtn = await appAPage.$("#btn-enter-workspace-proj_retinopathy");
+    if (!enterWsBtn) {
+      failures.push({ route: "/student/applications", role: "student", error: "Missing Enter Workspace button for active proj_retinopathy" });
+    } else {
+      await enterWsBtn.click();
+      await appAPage.waitForTimeout(600);
+      const wsCrash = await checkPageContent(appAPage, "/projects/proj_retinopathy/workspace (from applications)");
+      if (wsCrash) failures.push({ route: "/projects/proj_retinopathy/workspace", role: "student", error: wsCrash });
+      console.log("    ✓ Applications: Clicked Enter Workspace -> successfully opened /projects/proj_retinopathy/workspace");
+    }
+
+    // Go back to /student/applications
+    await appAPage.goto(`${FRONTEND_URL}/student/applications`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appAPage.waitForTimeout(600);
+
+    // Check closed project: verify Enter Workspace NEVER exists for closed projects
+    const closedWsBtn = await appAPage.$("#btn-enter-workspace-proj_past_1");
+    if (closedWsBtn) {
+      failures.push({ route: "/student/applications", role: "student", error: "CRITICAL: Enter Workspace button found on closed project proj_past_1!" });
+    } else {
+      console.log("    ✓ Verified: Closed projects never show Enter Workspace button.");
+    }
+
+    // Click "View closed charter" on proj_past_1
+    const closedCharterBtn = await appAPage.$("#btn-view-closed-charter-proj_past_1");
+    if (closedCharterBtn) {
+      await closedCharterBtn.click();
+      await appAPage.waitForTimeout(600);
+      const ccCrash = await checkPageContent(appAPage, "/charters/proj_past_1 (from closed applications)");
+      if (ccCrash) failures.push({ route: "/charters/proj_past_1", role: "student", error: ccCrash });
+      console.log("    ✓ Clicked View closed charter -> successfully opened /charters/proj_past_1");
+    }
+
+    // Go back and click "View timeline" on proj_past_1
+    await appAPage.goto(`${FRONTEND_URL}/student/applications`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appAPage.waitForTimeout(600);
+
+    const timelineBtn = await appAPage.$("#btn-view-timeline-proj_past_1");
+    if (timelineBtn) {
+      await timelineBtn.click();
+      await appAPage.waitForTimeout(600);
+      const tlCrash = await checkPageContent(appAPage, "/projects/proj_past_1/timeline (from closed applications)");
+      if (tlCrash) failures.push({ route: "/projects/proj_past_1/timeline", role: "student", error: tlCrash });
+      console.log("    ✓ Clicked View timeline -> successfully opened /projects/proj_past_1/timeline");
+    }
+
+    if (appAErrors.length > 0) failures.push({ route: "/student/applications", role: "student", error: appAErrors.join("; ") });
+    await appAContext.close();
+
+    // 6) Interactive checks for Student C (Review charter and accept)
+    console.log("  Testing Student C unaccepted charter review flow (Dashboard & Applications)...");
+    const studentCSession = await loginAs("student.c@vouch.local");
+    const appCContext = await browser.newContext();
+    await appCContext.addCookies([
+      {
+        name: "vouch_session",
+        value: studentCSession.cookieVal,
+        url: FRONTEND_URL,
+      },
+    ]);
+    const appCPage = await appCContext.newPage();
+    const appCErrors = setupErrorTracking(appCPage);
+
+    // 6A) Dashboard Review charter button
+    await appCPage.goto(`${FRONTEND_URL}/student`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appCPage.waitForTimeout(600);
+
+    const dashRevBtn = await appCPage.$("#btn-dashboard-review-proj_retinopathy");
+    if (!dashRevBtn) {
+      failures.push({ route: "/student", role: "student", error: "Missing Review charter button for unaccepted member on student dashboard" });
+    } else {
+      await dashRevBtn.click();
+      await appCPage.waitForTimeout(600);
+      const drcCrash = await checkPageContent(appCPage, "/charters/proj_retinopathy (from dashboard Review charter button)");
+      if (drcCrash) failures.push({ route: "/charters/proj_retinopathy", role: "student", error: drcCrash });
+      console.log("    ✓ Dashboard: Clicked Review charter and accept -> successfully opened /charters/proj_retinopathy");
+    }
+
+    // 6B) Applications Review charter button
+    await appCPage.goto(`${FRONTEND_URL}/student/applications`, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await appCPage.waitForTimeout(600);
+
+    const reviewCharterBtn = await appCPage.$("#btn-review-charter-proj_retinopathy");
+    if (!reviewCharterBtn) {
+      failures.push({ route: "/student/applications", role: "student", error: "Missing 'Review charter and accept' button for unaccepted member on proj_retinopathy" });
+    } else {
+      await reviewCharterBtn.click();
+      await appCPage.waitForTimeout(600);
+      const rcCrash = await checkPageContent(appCPage, "/charters/proj_retinopathy (from applications Review charter button)");
+      if (rcCrash) failures.push({ route: "/charters/proj_retinopathy", role: "student", error: rcCrash });
+      console.log("    ✓ Applications: Clicked Review charter and accept -> successfully opened /charters/proj_retinopathy");
+    }
+
+    if (appCErrors.length > 0) failures.push({ route: "/student/applications", role: "student", error: appCErrors.join("; ") });
+    await appCContext.close();
   } finally {
     if (browser) await browser.close();
   }

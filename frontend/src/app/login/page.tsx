@@ -75,7 +75,7 @@ const DEMO_ACCOUNTS_BY_ROLE: Record<
   student: [
     { email: "student.a@vouch.local", label: "Student A (4.6 ⭐)", badge: "Edge ML" },
     { email: "student.b@vouch.local", label: "Student B (3.9 ⭐)", badge: "Fast ML" },
-    { email: "student.c@vouch.local", label: "Student C (Newbie)", badge: "Newbie" },
+    { email: "student.c@vouch.local", label: "Student C (Accept Flow Demo)", badge: "Pending Accept" },
   ],
   expert: [
     { email: "expert.a@vouch.local", label: "Expert A (4.9 ⭐)", badge: "Biomedical" },

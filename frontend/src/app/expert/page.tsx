@@ -86,6 +86,38 @@ export default function ExpertDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Active Initiative Action Card */}
+        <div className="mt-8">
+          <Card className="border-teal-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Active Advisory Workspace: Diabetic Retinopathy Detection
+              </CardTitle>
+              <Badge className="bg-teal-600 text-white text-xs">Review Desk</Badge>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Deliverables submitted for Milestone 1 are ready for expert evaluation. Review code integrity, verify latency metrics, and record sign-off.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" asChild className="gap-1.5 font-bold bg-teal-600 hover:bg-teal-700 text-white">
+                  <Link href="/projects/proj_retinopathy/workspace">
+                    <span>Enter Workspace</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" asChild className="gap-1.5 font-semibold text-xs">
+                  <Link href="/projects/proj_retinopathy/timeline">
+                    <span>Audit Timeline</span>
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
           </div>
         </main>
       </div>
