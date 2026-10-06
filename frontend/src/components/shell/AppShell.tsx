@@ -34,11 +34,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [ledgerStatus, setLedgerStatus] = useState<{
     status: "ok" | "tampered" | "loading";
     count?: number;
     broken_seq?: number;
   }>({ status: "loading" });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function checkLedger() {
@@ -239,8 +244,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                               <div className="mt-0.5 text-slate-600 dark:text-slate-400">
                                 {n.message}
                               </div>
-                              <div className="mt-1 text-[10px] text-slate-400">
-                                {new Date(n.created_at).toLocaleTimeString()}
+                              <div className="mt-1 text-[10px] text-slate-400" suppressHydrationWarning>
+                                {mounted ? new Date(n.created_at).toLocaleTimeString() : ""}
                               </div>
                             </Link>
                           ))

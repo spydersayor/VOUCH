@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { SectionErrorBoundary } from "@/components/common/SectionErrorBoundary";
 
 interface CharterData {
   id: string;
@@ -292,7 +293,8 @@ export default function CharterDetailPage() {
   const isSponsor = user?.role === "sponsor";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 animate-fade-up">
+    <SectionErrorBoundary sectionName="CharterPage">
+      <div className="mx-auto max-w-5xl px-4 py-8 animate-fade-up">
       {/* Top Back navigation */}
       <div className="mb-6 flex items-center justify-between">
         <Link
@@ -909,6 +911,7 @@ export default function CharterDetailPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </SectionErrorBoundary>
   );
 }

@@ -127,7 +127,7 @@ export default function StudentApplicationsPage() {
                             Rs {app.budget.toLocaleString()} Pool
                           </span>
                           <span>•</span>
-                          <span>Applied on {new Date(app.joined_at).toLocaleDateString()}</span>
+                          <span suppressHydrationWarning>Applied on {new Date(app.joined_at).toLocaleDateString()}</span>
                         </div>
                       </div>
 

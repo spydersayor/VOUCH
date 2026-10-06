@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { ProsConsPanel } from "@/components/pros-cons/ProsConsPanel";
+import { SectionErrorBoundary } from "@/components/common/SectionErrorBoundary";
 
 function CompanyRecordSection({ sponsorId, sponsorName, sponsorStars }: { sponsorId: string; sponsorName: string; sponsorStars: number }) {
   const [expanded, setExpanded] = useState(false);
@@ -131,7 +132,8 @@ export default function OpenProblemsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 animate-fade-up space-y-8">
+    <SectionErrorBoundary sectionName="OpenProblemsPage">
+      <div className="mx-auto max-w-6xl px-4 py-12 animate-fade-up space-y-8">
       {/* Header */}
       <div className="space-y-3 text-center sm:text-left">
         <Badge variant="subtle" className="text-xs font-bold uppercase">
@@ -179,7 +181,7 @@ export default function OpenProblemsPage() {
               <option value="funded_gt_50k">₹50,000+ Escrow</option>
             </select>
 
-            <Button type="submit" variant="default" className="font-bold">
+            <Button id="btn-filter-problems" type="submit" variant="default" className="font-bold">
               Filter
             </Button>
           </div>
@@ -296,7 +298,8 @@ export default function OpenProblemsPage() {
             );
           })
         )}
+        </div>
       </div>
-    </div>
+    </SectionErrorBoundary>
   );
 }
