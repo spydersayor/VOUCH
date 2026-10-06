@@ -52,8 +52,12 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
     { label: "Review Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2, badge: "Review" },
     { label: "Ledger Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
     { label: "Conflicts of Interest", href: "/expert/conflicts", icon: AlertTriangle },
+<<<<<<< HEAD
     { label: "Profile & Ratings", href: "/profile", icon: User },
     { label: "Settings", href: "/settings", icon: Settings },
+=======
+    { label: "Rehearsal Engine", href: "/rehearsal", icon: Sparkles, badge: "Simulate" },
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
   ];
 
   const sponsorItems: NavItem[] = [
@@ -63,16 +67,24 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
     { label: "Active Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2, badge: "Live" },
     { label: "Audit Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
     { label: "Wallet & Escrow", href: "/sponsor/wallet", icon: Wallet },
+<<<<<<< HEAD
     { label: "Company Profile", href: "/profile", icon: User },
     { label: "Settings", href: "/settings", icon: Settings },
+=======
+    { label: "Rehearsal Engine", href: "/rehearsal", icon: Sparkles, badge: "Simulate" },
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
   ];
 
   const adminItems: NavItem[] = [
     { label: "Governance Console", href: "/admin", icon: ShieldCheck },
     { label: "Project Workspace", href: "/projects/proj_retinopathy/workspace", icon: FolderGit2 },
     { label: "Ledger Timeline", href: "/projects/proj_retinopathy/timeline", icon: ShieldCheck },
+<<<<<<< HEAD
     { label: "My Profile", href: "/profile", icon: User },
     { label: "Settings", href: "/settings", icon: Settings },
+=======
+    { label: "Rehearsal Engine", href: "/rehearsal", icon: Sparkles, badge: "Simulate" },
+>>>>>>> bc6518a (feat: implement Phase 7 shared rules, rehearsal engine, demo guide, admin governance, and exit flows)
   ];
 
   let items: NavItem[] = [];

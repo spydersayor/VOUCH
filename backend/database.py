@@ -329,6 +329,23 @@ CREATE TABLE IF NOT EXISTS project_certificates (
     FOREIGN KEY(project_id) REFERENCES projects(id),
     FOREIGN KEY(recipient_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS disputes (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    initiator_id TEXT NOT NULL,
+    respondent_id TEXT,
+    reason TEXT NOT NULL,
+    status TEXT DEFAULT 'pending', -- pending, mediated, resolved, dismissed
+    resolution_notes TEXT DEFAULT '',
+    good_cause_granted INTEGER DEFAULT 0,
+    split_awarded_json TEXT DEFAULT '{}',
+    ledger_ref TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    mediated_at TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES projects(id),
+    FOREIGN KEY(initiator_id) REFERENCES users(id)
+);
 """
 
 

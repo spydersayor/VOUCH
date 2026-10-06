@@ -40,6 +40,7 @@ const ROLES_TO_TEST = [
       "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
+      "/rehearsal",
     ],
   },
   {
@@ -95,6 +96,7 @@ const ROLES_TO_TEST = [
       "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
+      "/rehearsal",
     ],
   },
   {
@@ -107,6 +109,7 @@ const ROLES_TO_TEST = [
       "/settings",
       "/projects/proj_retinopathy/workspace",
       "/projects/proj_retinopathy/timeline",
+      "/rehearsal",
     ],
   },
 ];
@@ -164,18 +167,17 @@ function setupErrorTracking(page) {
   page.on("console", (msg) => {
     if (msg.type() === "error") {
       const txt = msg.text();
-      // Ignore non-fatal React favicon, font warnings, Next.js HMR dev sockets, or expected 401/403 on /api/me for anonymous visits
+      // Ignore non-fatal React favicon, font warnings, or expected 401 on /api/me for anonymous visits
       if (
         !txt.includes("favicon") &&
         !txt.includes("status of 404 (Not Found)") &&
         !txt.includes("status of 401 (Unauthorized)") &&
         !txt.includes("status of 403 (Forbidden)") &&
-        !txt.includes("status of 403") &&
-        !txt.includes("_next/hmr") &&
-        !txt.includes("WebSocket connection")
+        !txt.includes("status of 403")
       ) {
-        errors.push(`Console Error: ${txt}`);
+        return;
       }
+      errors.push(`Console Error: ${txt}`);
     }
   });
   page.on("pageerror", (err) => {
@@ -274,10 +276,18 @@ async function runAudit() {
   console.log("🌐 PHASE 2: Playwright Headless Browser Render Checks...");
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
-  } catch (err) {
-    console.error("Failed to launch Playwright browser:", err);
-    process.exit(1);
+    browser = await chromium.launch({ headless: true, channel: "msedge" });
+  } catch (err1) {
+    try {
+      browser = await chromium.launch({ headless: true, channel: "chrome" });
+    } catch (err2) {
+      try {
+        browser = await chromium.launch({ headless: true });
+      } catch (err3) {
+        console.error("Failed to launch Playwright browser:", err1.message || err2.message || err3.message);
+        process.exit(1);
+      }
+    }
   }
 
   try {

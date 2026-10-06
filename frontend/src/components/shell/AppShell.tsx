@@ -21,6 +21,7 @@ import {
   FolderSearch,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { DemoGuide } from "@/components/common/DemoGuide";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const {
@@ -370,7 +371,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        {children}
+        <DemoGuide />
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-12 dark:border-slate-800 dark:bg-slate-950">
