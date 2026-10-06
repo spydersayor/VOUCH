@@ -3,33 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOUCH - Work you can prove</title>
+    <title>VOUCH — Work you can prove</title>
+    <meta name="description" content="A trust-first collaboration platform where every contribution, escrow lock, and rating is provable on an immutable ledger.">
     <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body>
-    <div class="banner">
-        <strong>VOUCH</strong> &mdash; Work you can prove. Backend Core (Phase 1) Active.
-    </div>
-    <main class="container">
-        <h1>Welcome to VOUCH</h1>
-        <p>A trust-first collaboration platform backed by an append-only cryptographic ledger.</p>
-        <div id="ledger-status" class="card">
-            <h3>Ledger Integrity Monitor</h3>
-            <p id="ledger-text">Checking ledger status...</p>
+    <!-- Skip to content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Top Demo Notification Banner -->
+    <aside class="demo-banner" aria-label="Demo environment notice">
+        <span class="badge badge-accent">SYNTHETIC DEMO</span>
+        <span>All data, KYC, and rupee escrow are strictly simulated. Operates 100% locally without cloud dependency.</span>
+        <a href="#/how-it-works" class="banner-link">Learn How It Works &rarr;</a>
+    </aside>
+
+    <!-- Main Navigation Bar -->
+    <header class="navbar" role="banner">
+        <div class="nav-container">
+            <a href="#/" class="logo" aria-label="VOUCH Home">
+                <span class="logo-shield">🛡️</span>
+                <span class="logo-text">VOUCH</span>
+                <span class="logo-tagline">PROVABLE WORK</span>
+            </a>
+
+            <!-- Mobile Hamburger Toggle -->
+            <button class="mobile-toggle" id="mobile-toggle" aria-expanded="false" aria-label="Toggle navigation menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+
+            <!-- Nav Links -->
+            <nav class="nav-menu" id="nav-menu" role="navigation" aria-label="Primary Navigation">
+                <ul class="nav-list">
+                    <li><a href="#/how-it-works" class="nav-link">How it works</a></li>
+                    <li><a href="#/open-problems" class="nav-link">Open problems</a></li>
+                    <li><a href="#/students" class="nav-link">For Students</a></li>
+                    <li><a href="#/experts" class="nav-link">For Experts</a></li>
+                    <li><a href="#/companies" class="nav-link">For Companies</a></li>
+                    <li><a href="#/pricing" class="nav-link">Pricing & Fees</a></li>
+                    <li><a href="#/faq" class="nav-link">FAQ</a></li>
+                </ul>
+
+                <!-- Auth / User Controls Container -->
+                <div class="nav-auth" id="nav-auth">
+                    <!-- Populated dynamically by app.js depending on auth state -->
+                </div>
+            </nav>
         </div>
-        <div id="seed-users" class="card">
-            <h3>Quick Login Accounts</h3>
-            <ul>
-                <li><strong>Sponsor:</strong> sponsor@vouch.local (Password123!)</li>
-                <li><strong>Expert A:</strong> expert.a@vouch.local (Password123!)</li>
-                <li><strong>Expert B:</strong> expert.b@vouch.local (Password123!) - Declared Conflict</li>
-                <li><strong>Student A:</strong> student.a@vouch.local (Password123!) - 4.6 Stars</li>
-                <li><strong>Student B:</strong> student.b@vouch.local (Password123!) - 3.9 Stars</li>
-                <li><strong>Student C:</strong> student.c@vouch.local (Password123!) - Newbie Badge</li>
-                <li><strong>Admin:</strong> admin@vouch.local (Password123!)</li>
-            </ul>
+    </header>
+
+    <!-- Main Content Root for Hash Router -->
+    <main id="main-content" class="main-content" tabindex="-1">
+        <!-- Rendered by app.js router -->
+        <div class="page-loading-skeleton" aria-live="polite">
+            <div class="skeleton-line title"></div>
+            <div class="skeleton-line subtitle"></div>
+            <div class="skeleton-card"></div>
         </div>
     </main>
+
+    <!-- Global Modal / Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="assertive"></div>
+
+    <!-- Global Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <span class="logo-shield">🛡️</span>
+                    <strong>VOUCH</strong>
+                </div>
+                <p>Work you can prove. Real milestones, locked rupee escrow, and stars backed by cryptographic receipts.</p>
+                <p class="built-with">Built with Google Antigravity as an AI coding tool.</p>
+            </div>
+
+            <div class="footer-nav">
+                <div class="footer-col">
+                    <h4>Platform</h4>
+                    <ul>
+                        <li><a href="#/how-it-works">How It Works</a></li>
+                        <li><a href="#/open-problems">Open Problems</a></li>
+                        <li><a href="#/pricing">Pricing & Split Math</a></li>
+                        <li><a href="#/about">About Architecture</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Roles</h4>
+                    <ul>
+                        <li><a href="#/students">For Students</a></li>
+                        <li><a href="#/experts">For Experts</a></li>
+                        <li><a href="#/companies">For Companies</a></li>
+                        <li><a href="#/login">Demo Login (7 Roles)</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Trust & Legal</h4>
+                    <ul>
+                        <li><a href="#/terms">Charter & Terms</a></li>
+                        <li><a href="#/privacy">Privacy & Confidentiality</a></li>
+                        <li><a href="#/help">Help Center</a></li>
+                        <li><a href="#/contact">Contact Us (Stored in DB)</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 VOUCH Platform. All rights reserved. Zero external tracking. Deterministic proof engine.</p>
+        </div>
+    </footer>
+
+    <!-- App JavaScript -->
     <script src="/app.js"></script>
 </body>
 </html>

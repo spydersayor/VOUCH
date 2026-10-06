@@ -18,6 +18,7 @@ def seed_database():
     with get_db() as conn:
         # Clear existing data cleanly
         tables = [
+            "user_settings", "contact_messages", "password_resets",
             "ratings_history", "notifications", "conflicts_of_interest",
             "ledger", "reviews", "payouts", "escrow_lockers", "milestones",
             "project_members", "charter_acceptances", "charters", "projects",
@@ -126,6 +127,28 @@ def seed_database():
             conn.execute(
                 "INSERT INTO wallets (user_id, balance) VALUES (?, ?)",
                 (u["id"], 500000 if u["role"] == "sponsor" else 25000),
+            )
+            # User Settings
+            conn.execute(
+                """
+                INSERT INTO user_settings (user_id, notification_invites, notification_charter, notification_milestones, notification_payouts, notification_stars, notification_integrity)
+                VALUES (?, 1, 1, 1, 1, 1, 1)
+                """,
+                (u["id"],),
+            )
+
+        # Sample initial notifications
+        seed_notifs = [
+            ("notif_1", "usr_student_a", "Charter Published: Low-cost diabetic retinopathy", "Sponsor published Charter v1. Review terms and accept to unlock brief.", "#/projects/proj_retinopathy"),
+            ("notif_2", "usr_student_a", "Payout Credited", "Milestone 1 payout of Rs 25,783 credited to your wallet from closed project.", "#/notifications"),
+            ("notif_3", "usr_student_b", "Integrity Check Notice", "Code similarity check cleared by Expert A on previous project.", "#/notifications"),
+            ("notif_4", "usr_expert_a", "Project Guidance Invitation", "Apex Health AI invites you to guide the Diabetic Retinopathy initiative.", "#/projects/proj_retinopathy"),
+            ("notif_5", "usr_sponsor", "Escrow Funded", "Rs 1,00,000 locked in milestone escrow for Diabetic Retinopathy.", "#/projects/proj_retinopathy"),
+        ]
+        for n_id, u_id, title, msg, link in seed_notifs:
+            conn.execute(
+                "INSERT INTO notifications (id, user_id, title, message, link, read) VALUES (?, ?, ?, ?, ?, 0)",
+                (n_id, u_id, title, msg, link),
             )
 
         # 2. Declare conflict of interest for Expert B with Apex Health AI

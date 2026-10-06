@@ -193,6 +193,38 @@ CREATE TABLE IF NOT EXISTS ratings_history (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    token TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id TEXT PRIMARY KEY,
+    notification_invites INTEGER DEFAULT 1,
+    notification_charter INTEGER DEFAULT 1,
+    notification_milestones INTEGER DEFAULT 1,
+    notification_payouts INTEGER DEFAULT 1,
+    notification_stars INTEGER DEFAULT 1,
+    notification_integrity INTEGER DEFAULT 1,
+    delete_requested INTEGER DEFAULT 0,
+    portfolio_links_json TEXT DEFAULT '[]',
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
 """
 
 
