@@ -803,6 +803,39 @@ async def get_project_charter(
         }
 
 
+@app.get("/api/charters/{charter_or_project_id}")
+async def get_charter_by_id(
+    charter_or_project_id: str,
+    user: Optional[Dict[str, Any]] = Depends(get_optional_user),
+):
+    with get_db() as conn:
+        charter = conn.execute(
+            "SELECT * FROM charters WHERE (project_id = ? OR id = ?) AND is_current = 1",
+            (charter_or_project_id, charter_or_project_id),
+        ).fetchone()
+        if not charter:
+            charter = conn.execute(
+                "SELECT * FROM charters WHERE id = ?",
+                (charter_or_project_id,),
+            ).fetchone()
+        if not charter:
+            raise HTTPException(status_code=404, detail="Charter not found")
+        return await get_project_charter(charter["project_id"], user)
+
+
+@app.get("/api/projects/{project_id}/charters/history")
+async def get_charter_history(
+    project_id: str,
+    user: Optional[Dict[str, Any]] = Depends(get_optional_user),
+):
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT id, project_id, version, engagement_model, is_current, created_at FROM charters WHERE project_id = ? ORDER BY version DESC",
+            (project_id,),
+        ).fetchall()
+        return {"versions": [dict(r) for r in rows]}
+
+
 @app.post("/api/projects/{project_id}/charter/accept")
 async def post_accept_charter(
     project_id: str,
