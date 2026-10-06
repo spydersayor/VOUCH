@@ -323,3 +323,59 @@ def test_lifecycle_ledger_entries_and_notifications():
             "SELECT * FROM notifications WHERE user_id = 'usr_sponsor' AND title LIKE '%Application%'"
         ).fetchone()
         assert sponsor_notif is not None
+
+
+def test_every_seeded_project_has_published_charter():
+    client = TestClient(app)
+    with get_db() as conn:
+        projects = conn.execute("SELECT id, status, final_outcome FROM projects").fetchall()
+        assert len(projects) >= 5, "Expected at least 5 seeded projects (active + past)"
+
+        for p in projects:
+            p_id = p["id"]
+            # 1. Database level check
+            charter = conn.execute(
+                "SELECT * FROM charters WHERE project_id = ? AND is_current = 1",
+                (p_id,),
+            ).fetchone()
+            assert charter is not None, f"Seeded project '{p_id}' is missing a published charter record!"
+            assert charter["version"] >= 1
+            assert charter["scope"]
+            assert charter["ip_clause"]
+
+            # 2. Public API endpoint by project id
+            res = client.get(f"/api/charters/{p_id}")
+            assert res.status_code == 200, f"Failed to retrieve charter for project '{p_id}': {res.text}"
+            data = res.json()["charter"]
+            assert data["project_id"] == p_id
+            assert data["version"] == charter["version"]
+
+            if p["status"] == "closed":
+                assert data["is_closed"] is True
+                assert data["final_outcome"] is not None
+                # Also verify {project_id}:{version} syntax
+                res_v = client.get(f"/api/charters/{p_id}:1")
+                assert res_v.status_code == 200, f"Colon syntax {p_id}:1 failed: {res_v.text}"
+                assert res_v.json()["charter"]["version"] == 1
+
+
+def test_closed_project_confidential_brief_is_strictly_sealed():
+    client = TestClient(app)
+    # Even sponsor owner cannot view brief of closed project
+    login_as(client, "sponsor@vouch.local")
+    resp = client.get("/api/projects/proj_past_1/brief")
+    assert resp.status_code == 403
+    assert "concluded and confidential data is archived" in resp.json()["detail"]
+
+
+def test_charter_api_failure_modes_and_reasons():
+    client = TestClient(app)
+    # Non-existent charter
+    res404 = client.get("/api/charters/proj_completely_fake")
+    assert res404.status_code == 404
+    assert "does not exist on the immutable ledger" in res404.json()["detail"]
+
+    # Non-existent version
+    res_v404 = client.get("/api/charters/proj_retinopathy:999")
+    assert res_v404.status_code == 404
+

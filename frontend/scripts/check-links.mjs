@@ -1,5 +1,5 @@
 // frontend/scripts/check-links.mjs
-// Crawls all internal links across all roles and verifies zero 404s or errors.
+// Crawls all internal links and verifies zero 404s, including deep charter audits across all roles.
 
 import http from "node:http";
 
@@ -28,8 +28,30 @@ const PUBLIC_ROUTES = [
 
 const ROLES_TO_TEST = [
   {
-    role: "student",
+    role: "sponsor",
+    email: "sponsor@vouch.local",
+    dashboard: "/sponsor",
+    routes: [
+      "/sponsor",
+      "/sponsor/post-problem",
+      "/sponsor/projects",
+      "/sponsor/wallet",
+    ],
+  },
+  {
+    role: "invited_student",
     email: "student.a@vouch.local",
+    dashboard: "/student",
+    routes: [
+      "/student",
+      "/student/applications",
+      "/student/matches",
+      "/student/credentials",
+    ],
+  },
+  {
+    role: "uninvited_student",
+    email: "student.c@vouch.local",
     dashboard: "/student",
     routes: [
       "/student",
@@ -46,17 +68,6 @@ const ROLES_TO_TEST = [
       "/expert",
       "/expert/matches",
       "/expert/conflicts",
-    ],
-  },
-  {
-    role: "sponsor",
-    email: "sponsor@vouch.local",
-    dashboard: "/sponsor",
-    routes: [
-      "/sponsor",
-      "/sponsor/post-problem",
-      "/sponsor/projects",
-      "/sponsor/wallet",
     ],
   },
   {
@@ -122,6 +133,16 @@ async function runAudit() {
   let totalTested = 0;
   let failures = [];
   const visited = new Set();
+  const allCharterLinks = new Set([
+    "/charters/proj_retinopathy",
+    "/charters/proj_indic_nlp",
+    "/charters/proj_past_1",
+    "/charters/proj_past_1:1",
+    "/charters/proj_past_2",
+    "/charters/proj_past_2:1",
+    "/charters/proj_past_3",
+    "/charters/proj_past_3:1",
+  ]);
 
   // 1. Audit Public Routes
   console.log("🔍 Checking Public Routes...");
@@ -132,11 +153,17 @@ async function runAudit() {
     const res = await fetchWithCookie(targetUrl);
     if (res.status === 200) {
       console.log(`  ✓ [200] ${route}`);
+      // Find charter links in public HTML
+      for (const l of extractLinks(res.text || "")) {
+        if (l.startsWith("/charters/")) allCharterLinks.add(l);
+      }
     } else {
       console.error(`  ✗ [${res.status}] ${route} -> FAILED`);
       failures.push({ route, status: res.status, role: "public" });
     }
   }
+
+  const roleSessions = {};
 
   // 2. Audit Roles and Internal Links
   for (const item of ROLES_TO_TEST) {
@@ -144,6 +171,7 @@ async function runAudit() {
     let session;
     try {
       session = await loginAs(item.email);
+      roleSessions[item.role] = session;
     } catch (err) {
       console.error(`  ✗ Could not log in: ${err.message}`);
       failures.push({ route: item.dashboard, status: 0, error: err.message, role: item.role });
@@ -167,6 +195,9 @@ async function runAudit() {
           const rRes = await fetchWithCookie(`${FRONTEND_URL}${r}`, session.cookie);
           if (rRes.status === 200 || rRes.status === 307 || rRes.status === 308) {
             console.log(`    ✓ [${rRes.status}] Role Route: ${r}`);
+            for (const l of extractLinks(rRes.text || "")) {
+              if (l.startsWith("/charters/")) allCharterLinks.add(l);
+            }
           } else {
             console.error(`    ✗ [${rRes.status}] Role Route: ${r} -> FAILED`);
             failures.push({ route: r, status: rRes.status, role: item.role });
@@ -178,6 +209,7 @@ async function runAudit() {
     // Extract links in dashboard HTML
     const discovered = extractLinks(dashRes.text || "");
     for (const link of discovered) {
+      if (link.startsWith("/charters/")) allCharterLinks.add(link);
       if (visited.has(`${item.role}:${link}`)) continue;
       visited.add(`${item.role}:${link}`);
       totalTested++;
@@ -185,9 +217,44 @@ async function runAudit() {
       const linkRes = await fetchWithCookie(`${FRONTEND_URL}${link}`, session.cookie);
       if (linkRes.status === 200 || linkRes.status === 307 || linkRes.status === 308) {
         console.log(`    ✓ [${linkRes.status}] Internal Link: ${link}`);
+        for (const l of extractLinks(linkRes.text || "")) {
+          if (l.startsWith("/charters/")) allCharterLinks.add(l);
+        }
       } else {
         console.error(`    ✗ [${linkRes.status}] Internal Link: ${link} -> FAILED`);
         failures.push({ route: link, status: linkRes.status, role: item.role });
+      }
+    }
+  }
+
+  // 3. Deep Charter Crawl across Sponsor, Invited Student, Uninvited Student, and Admin
+  console.log(`\n📜 Deep Charter Audit across Roles (${allCharterLinks.size} unique charter links found)...`);
+  const rolesToAuditCharters = ["sponsor", "invited_student", "uninvited_student", "admin"];
+
+  for (const roleKey of rolesToAuditCharters) {
+    const session = roleSessions[roleKey];
+    if (!session) continue;
+    console.log(`\n  Checking Charters as [${roleKey.toUpperCase()}]...`);
+
+    for (const charterRoute of allCharterLinks) {
+      totalTested++;
+      const res = await fetchWithCookie(`${FRONTEND_URL}${charterRoute}`, session.cookie);
+      if (res.status === 200 || res.status === 307 || res.status === 308) {
+        console.log(`    ✓ [${res.status}] Frontend Charter: ${charterRoute}`);
+      } else {
+        console.error(`    ✗ [${res.status}] Frontend Charter: ${charterRoute} -> FAILED`);
+        failures.push({ route: charterRoute, status: res.status, role: roleKey });
+      }
+
+      // Also verify backend API directly
+      const rawId = charterRoute.replace("/charters/", "");
+      totalTested++;
+      const apiRes = await fetchWithCookie(`${BACKEND_URL}/api/charters/${rawId}`, session.cookie);
+      if (apiRes.status === 200) {
+        console.log(`    ✓ [200] Backend API Charter: /api/charters/${rawId}`);
+      } else {
+        console.error(`    ✗ [${apiRes.status}] Backend API Charter: /api/charters/${rawId} -> FAILED`);
+        failures.push({ route: `/api/charters/${rawId}`, status: apiRes.status, role: roleKey });
       }
     }
   }

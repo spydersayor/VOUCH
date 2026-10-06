@@ -46,6 +46,12 @@ def check_confidential_brief_access(project_id: str, user: Dict[str, Any]) -> bo
                 detail=f"Project '{project_id}' not found.",
             )
 
+        if project["status"] == "closed":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Confidential brief locked: This project has concluded and confidential data is archived.",
+            )
+
         # Sponsor owner can view their own project brief
         if project["sponsor_id"] == user_id:
             return True

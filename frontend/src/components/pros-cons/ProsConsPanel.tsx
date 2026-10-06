@@ -17,9 +17,12 @@ import {
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
 
 export interface EvidenceItem {
   project?: string;
+  project_id?: string | null;
+  charter_id?: string | null;
   review_count?: number;
   metric_score?: number | null;
   ledger_ref?: string;
@@ -180,9 +183,19 @@ export function ProsConsPanel({
                             {p.evidence.review_count || 1} evaluations
                           </div>
                         </div>
-                        <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
-                          <FileCheck className="h-3 w-3 text-emerald-600" />
-                          <span className="font-mono">Ledger Ref: {p.evidence.ledger_ref}</span>
+                        <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-slate-500">
+                          <div className="flex items-center gap-1">
+                            <FileCheck className="h-3 w-3 text-emerald-600" />
+                            <span className="font-mono">Ledger Ref: {p.evidence.ledger_ref}</span>
+                          </div>
+                          {(p.evidence.charter_id || p.evidence.project_id) && (
+                            <Link
+                              href={`/charters/${p.evidence.charter_id || p.evidence.project_id}`}
+                              className="font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                            >
+                              View Charter →
+                            </Link>
+                          )}
                         </div>
                       </div>
                     )}
@@ -247,9 +260,19 @@ export function ProsConsPanel({
                             {c.evidence.metric_score ?? "N/A"}/5.0
                           </div>
                         </div>
-                        <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
-                          <FileCheck className="h-3 w-3 text-amber-600" />
-                          <span className="font-mono">Ledger Audit: {c.evidence.ledger_ref}</span>
+                        <div className="mt-1 flex items-center justify-between gap-1 text-[10px] text-slate-500">
+                          <div className="flex items-center gap-1">
+                            <FileCheck className="h-3 w-3 text-amber-600" />
+                            <span className="font-mono">Ledger Audit: {c.evidence.ledger_ref}</span>
+                          </div>
+                          {(c.evidence.charter_id || c.evidence.project_id) && (
+                            <Link
+                              href={`/charters/${c.evidence.charter_id || c.evidence.project_id}`}
+                              className="font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                            >
+                              View Charter →
+                            </Link>
+                          )}
                         </div>
                       </div>
                     )}

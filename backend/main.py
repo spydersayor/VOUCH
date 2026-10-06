@@ -820,15 +820,34 @@ async def get_confidential_brief(
 @app.get("/api/projects/{project_id}/charter")
 async def get_project_charter(
     project_id: str,
+    version: Optional[int] = None,
     user: Optional[Dict[str, Any]] = Depends(get_optional_user),
 ):
     with get_db() as conn:
-        charter = conn.execute(
-            "SELECT * FROM charters WHERE project_id = ? AND is_current = 1",
-            (project_id,),
-        ).fetchone()
+        if version is not None:
+            charter = conn.execute(
+                "SELECT * FROM charters WHERE project_id = ? AND version = ?",
+                (project_id, version),
+            ).fetchone()
+        else:
+            charter = conn.execute(
+                "SELECT * FROM charters WHERE project_id = ? AND is_current = 1",
+                (project_id,),
+            ).fetchone()
+            if not charter:
+                charter = conn.execute(
+                    "SELECT * FROM charters WHERE project_id = ? ORDER BY version DESC LIMIT 1",
+                    (project_id,),
+                ).fetchone()
+
         if not charter:
             raise HTTPException(status_code=404, detail="No active charter found for this project.")
+
+        proj = conn.execute(
+            "SELECT status, final_outcome FROM projects WHERE id = ?",
+            (project_id,),
+        ).fetchone()
+        is_closed = bool(proj and proj["status"] == "closed")
 
         accepted = False
         if user:
@@ -852,8 +871,10 @@ async def get_project_charter(
                 "confidentiality_clause": charter["confidentiality_clause"],
                 "exit_terms": charter["exit_terms"],
                 "commercialisation_clause": charter["commercialisation_clause"],
-                "split_config": json.loads(charter["split_config_json"]),
+                "split_config": json.loads(charter["split_config_json"] or "{}"),
                 "is_current": bool(charter["is_current"]),
+                "is_closed": is_closed,
+                "final_outcome": proj["final_outcome"] if proj else None,
             },
             "user_accepted_current_version": accepted,
         }
@@ -865,18 +886,45 @@ async def get_charter_by_id(
     user: Optional[Dict[str, Any]] = Depends(get_optional_user),
 ):
     with get_db() as conn:
-        charter = conn.execute(
-            "SELECT * FROM charters WHERE (project_id = ? OR id = ?) AND is_current = 1",
-            (charter_or_project_id, charter_or_project_id),
-        ).fetchone()
+        charter = None
+        # Support colon syntax: {project_id}:{version} (e.g., proj_past_1:1)
+        if ":" in charter_or_project_id:
+            p_id, v_str = charter_or_project_id.split(":", 1)
+            try:
+                v_num = int(v_str)
+                charter = conn.execute(
+                    "SELECT * FROM charters WHERE (project_id = ? OR id = ?) AND version = ?",
+                    (p_id, p_id, v_num),
+                ).fetchone()
+            except ValueError:
+                pass
+
+        if not charter:
+            charter = conn.execute(
+                "SELECT * FROM charters WHERE (project_id = ? OR id = ?) AND is_current = 1",
+                (charter_or_project_id, charter_or_project_id),
+            ).fetchone()
+
         if not charter:
             charter = conn.execute(
                 "SELECT * FROM charters WHERE id = ?",
                 (charter_or_project_id,),
             ).fetchone()
+
         if not charter:
-            raise HTTPException(status_code=404, detail="Charter not found")
-        return await get_project_charter(charter["project_id"], user)
+            charter = conn.execute(
+                "SELECT * FROM charters WHERE project_id = ? ORDER BY version DESC LIMIT 1",
+                (charter_or_project_id,),
+            ).fetchone()
+
+        if not charter:
+            # Check if project exists to provide exact reason
+            proj = conn.execute("SELECT id FROM projects WHERE id = ?", (charter_or_project_id,)).fetchone()
+            if proj:
+                raise HTTPException(status_code=404, detail="This project does not have a published charter yet.")
+            raise HTTPException(status_code=404, detail="This charter does not exist on the immutable ledger.")
+
+        return await get_project_charter(project_id=charter["project_id"], version=charter["version"], user=user)
 
 
 @app.get("/api/projects/{project_id}/charters/history")

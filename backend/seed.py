@@ -181,34 +181,167 @@ def seed_database():
                 "title": "On-Device Skin Lesion Classifier",
                 "sponsor_id": "usr_sponsor",
                 "summary": "MobileNet skin lesion classifier with 89% accuracy.",
+                "outcome": "Completed & Verified: Edge model delivered with 89% sensitivity on target ARM devices. Payouts released in full, IP commercial rights transferred to sponsor, academic attribution verified on ledger.",
+                "scope": "Design, train, and benchmark a quantized MobileNet edge classifier for dermatological skin lesion triage with >88% balanced multiclass accuracy.",
+                "ip_clause": "Sponsor retains commercial licensing rights; student contributors retain open academic publication rights and named co-authorship.",
+                "confidentiality": "De-identified dermoscopy training datasets restricted to approved project environments; no external redistribution.",
+                "exit_terms": "Milestone-gated payouts with 100% escrow release upon acceptance. Disputed milestones reviewed by expert mentor.",
+                "commercialisation": "Academic research publication permitted following 60-day patent review clearance.",
+                "split": {
+                    "platform_fee_pct": 0.10,
+                    "ai_reserve_pct": 0.05,
+                    "expert_pool_pct": 0.30,
+                    "student_pool_pct": 0.70,
+                    "student_weights": {"usr_student_a": 1.0},
+                },
+                "members": [
+                    ("usr_sponsor", "sponsor"),
+                    ("usr_student_a", "student"),
+                    ("usr_expert_a", "expert"),
+                ],
+                "milestones": [
+                    ("ms_past1_1", 1, "Dataset Preparation & Quantization Pipeline", "Preprocessing, normalization, and INT8 calibration benchmarks", 35000),
+                    ("ms_past1_2", 2, "Edge Optimization & Clinical Validation", "ARM Cortex-A deployment, latency validation (<120ms), and final report", 40000),
+                ],
             },
             {
                 "id": "proj_past_2",
                 "title": "Cardio Acoustic Pulse Analyzer",
                 "sponsor_id": "usr_sponsor",
                 "summary": "Audio DSP pipeline for digital stethoscopes.",
+                "outcome": "Completed & Verified: Audio DSP pipeline integrated into digital stethoscope firmware. All milestone payouts released on-time, academic attribution verified on ledger.",
+                "scope": "Develop low-latency digital signal processing filters and systolic murmur detection pipeline for digital stethoscope recordings.",
+                "ip_clause": "Dual licensing: core firmware routines licensed under commercial terms to sponsor; generalized DSP algorithms available under academic research attribution.",
+                "confidentiality": "Synthetic and clinical acoustic phonocardiogram signals strictly confidential.",
+                "exit_terms": "Standard escrow release per completed milestone. Uncontested pro-rata release on verified milestones.",
+                "commercialisation": "Sponsor commercial rights active upon final milestone payout release.",
+                "split": {
+                    "platform_fee_pct": 0.10,
+                    "ai_reserve_pct": 0.05,
+                    "expert_pool_pct": 0.30,
+                    "student_pool_pct": 0.70,
+                    "student_weights": {"usr_student_a": 0.50, "usr_student_b": 0.50},
+                },
+                "members": [
+                    ("usr_sponsor", "sponsor"),
+                    ("usr_student_a", "student"),
+                    ("usr_student_b", "student"),
+                    ("usr_expert_a", "expert"),
+                ],
+                "milestones": [
+                    ("ms_past2_1", 1, "Acoustic DSP Filtering Engine", "Bandpass filtering and phonocardiogram signal segmentation", 35000),
+                    ("ms_past2_2", 2, "Murmur Classification Architecture", "Feature extraction and lightweight edge classifier with low battery draw", 40000),
+                ],
             },
             {
                 "id": "proj_past_3",
                 "title": "Pediatric X-Ray Pneumonia Triage",
                 "sponsor_id": "usr_sponsor",
                 "summary": "Automated triage network for rural clinics.",
+                "outcome": "Completed & Verified: Pneumonia triage neural net validated against rural benchmark scans with zero critical regressions. Payouts released in full.",
+                "scope": "Deploy convolutional network for automated pediatric pneumonia opacity triage on chest radiographs in remote clinics.",
+                "ip_clause": "Open clinical benchmarking suite with proprietary deployment optimizations retained by sponsor.",
+                "confidentiality": "Strict anonymization of patient records per national health data standards.",
+                "exit_terms": "Independent expert sign-off required for milestone completion and escrow dispersal.",
+                "commercialisation": "Non-exclusive commercial deployment rights with perpetual student credit.",
+                "split": {
+                    "platform_fee_pct": 0.10,
+                    "ai_reserve_pct": 0.05,
+                    "expert_pool_pct": 0.30,
+                    "student_pool_pct": 0.70,
+                    "student_weights": {"usr_student_b": 1.0},
+                },
+                "members": [
+                    ("usr_sponsor", "sponsor"),
+                    ("usr_student_b", "student"),
+                    ("usr_expert_a", "expert"),
+                ],
+                "milestones": [
+                    ("ms_past3_1", 1, "Radiograph Augmentation & Anonymization", "Automated lung masking and high-resolution radiograph standardization", 35000),
+                    ("ms_past3_2", 2, "Sensitivity Thresholding & Triage Model", "Clinical validation achieving >92% sensitivity on pediatric cohort", 40000),
+                ],
             },
         ]
 
         for p in past_projects:
             conn.execute(
                 """
-                INSERT INTO projects (id, title, public_summary, confidential_brief, budget, engagement_model, status, sponsor_id)
-                VALUES (?, ?, ?, ?, ?, 'funded', 'closed', ?)
+                INSERT INTO projects (
+                    id, title, public_summary, confidential_brief, budget,
+                    engagement_model, status, final_outcome, sponsor_id
+                )
+                VALUES (?, ?, ?, ?, ?, 'funded', 'closed', ?, ?)
                 """,
-                (p["id"], p["title"], p["summary"], "Archived confidential brief", 75000, p["sponsor_id"]),
+                (p["id"], p["title"], p["summary"], "Archived confidential brief (sealed upon project completion)", 75000, p["outcome"], p["sponsor_id"]),
             )
+            # Create stable closed charter v1 for every past project
+            charter_id = f"charter_{p['id']}_v1"
+            conn.execute(
+                """
+                INSERT INTO charters (
+                    id, project_id, version, engagement_model, scope, ip_clause,
+                    confidentiality_clause, exit_terms, commercialisation_clause,
+                    split_config_json, is_current
+                ) VALUES (?, ?, 1, 'funded', ?, ?, ?, ?, ?, ?, 1)
+                """,
+                (
+                    charter_id,
+                    p["id"],
+                    p["scope"],
+                    p["ip_clause"],
+                    p["confidentiality"],
+                    p["exit_terms"],
+                    p["commercialisation"],
+                    json.dumps(p["split"]),
+                ),
+            )
+            record_ledger_entry(
+                actor=p["sponsor_id"],
+                action="CHARTER_PUBLISHED",
+                payload={"project_id": p["id"], "charter_id": charter_id, "version": 1, "model": "funded"},
+                conn=conn,
+            )
+
+            # Seed project members and their charter acceptances
+            for m_uid, m_role in p["members"]:
+                mem_id = f"mem_{p['id']}_{m_uid}"
+                conn.execute(
+                    """
+                    INSERT INTO project_members (id, project_id, user_id, role, status)
+                    VALUES (?, ?, ?, ?, 'accepted')
+                    """,
+                    (mem_id, p["id"], m_uid, m_role),
+                )
+                acc_id = f"acc_{p['id']}_{m_uid}_v1"
+                conn.execute(
+                    """
+                    INSERT INTO charter_acceptances (id, charter_id, project_id, user_id, version, engagement_model_accepted)
+                    VALUES (?, ?, ?, ?, 1, 1)
+                    """,
+                    (acc_id, charter_id, p["id"], m_uid),
+                )
+                record_ledger_entry(
+                    actor=m_uid,
+                    action="CHARTER_ACCEPTED",
+                    payload={"project_id": p["id"], "charter_id": charter_id, "version": 1, "engagement_model": "funded"},
+                    conn=conn,
+                )
+
+            # Seed milestones
+            for ms_id, seq, ms_title, ms_desc, ms_budget in p["milestones"]:
+                conn.execute(
+                    """
+                    INSERT INTO milestones (id, project_id, sequence, title, description, budget, status)
+                    VALUES (?, ?, ?, ?, ?, ?, 'completed')
+                    """,
+                    (ms_id, p["id"], seq, ms_title, ms_desc, ms_budget),
+                )
+
             # Ledger entry for past closed project
             record_ledger_entry(
                 actor=p["sponsor_id"],
                 action="PROJECT_CLOSED",
-                payload={"project_id": p["id"], "title": p["title"]},
+                payload={"project_id": p["id"], "title": p["title"], "outcome": p["outcome"]},
                 conn=conn,
             )
 

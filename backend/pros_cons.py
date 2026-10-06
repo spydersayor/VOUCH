@@ -50,6 +50,8 @@ def compute_user_pros_and_cons(user_id: str, role: str, conn: sqlite3.Connection
                     "type": "pro",
                     "evidence": {
                         "project": "VOUCH Academic Verification Sandbox",
+                        "project_id": None,
+                        "charter_id": None,
                         "review_count": 0,
                         "metric_score": 5.0,
                         "ledger_ref": "genesis_verification_record"
@@ -61,6 +63,8 @@ def compute_user_pros_and_cons(user_id: str, role: str, conn: sqlite3.Connection
                     "type": "pro",
                     "evidence": {
                         "project": "Platform Governance Policy",
+                        "project_id": None,
+                        "charter_id": None,
                         "review_count": 0,
                         "metric_score": None,
                         "ledger_ref": "policy_newbie_boost"
@@ -85,6 +89,7 @@ def compute_user_pros_and_cons(user_id: str, role: str, conn: sqlite3.Connection
     closed_count = len(closed_projects)
     project_names = [p["title"] for p in closed_projects]
     primary_project_name = project_names[0] if project_names else "Historical Engagements"
+    primary_project_id = closed_projects[0]["id"] if closed_projects else None
 
     limited_data = closed_count < MIN_CLOSED_PROJECTS_FOR_FULL_DATA
 
@@ -121,6 +126,8 @@ def compute_user_pros_and_cons(user_id: str, role: str, conn: sqlite3.Connection
 
             evidence_obj = {
                 "project": primary_project_name,
+                "project_id": primary_project_id,
+                "charter_id": f"{primary_project_id}:1" if primary_project_id else None,
                 "review_count": len(vals),
                 "metric_score": rounded_avg,
                 "ledger_ref": reviews[0].get("ledger_ref") or "ledger_block_closed"
@@ -166,6 +173,8 @@ def compute_user_pros_and_cons(user_id: str, role: str, conn: sqlite3.Connection
             "type": "pro",
             "evidence": {
                 "project": "All closed engagements",
+                "project_id": primary_project_id,
+                "charter_id": f"{primary_project_id}:1" if primary_project_id else None,
                 "review_count": closed_count,
                 "metric_score": 1.0,
                 "ledger_ref": "audit_zero_quits"
@@ -178,6 +187,8 @@ def compute_user_pros_and_cons(user_id: str, role: str, conn: sqlite3.Connection
             "type": "con",
             "evidence": {
                 "project": "Ledger audit trail",
+                "project_id": primary_project_id,
+                "charter_id": f"{primary_project_id}:1" if primary_project_id else None,
                 "review_count": len(quits),
                 "metric_score": 0.0,
                 "ledger_ref": "audit_quits_recorded"
@@ -218,6 +229,7 @@ def compute_company_pros_and_cons(sponsor_id: str, conn: sqlite3.Connection) -> 
     closed_projects = cur.fetchall()
     closed_count = len(closed_projects)
     primary_project_name = closed_projects[0]["title"] if closed_projects else "Historical Engagements"
+    primary_project_id = closed_projects[0]["id"] if closed_projects else None
     limited_data = closed_count < MIN_CLOSED_PROJECTS_FOR_FULL_DATA
 
     # Fetch reviews of the sponsor
@@ -250,6 +262,8 @@ def compute_company_pros_and_cons(sponsor_id: str, conn: sqlite3.Connection) -> 
 
             evidence_obj = {
                 "project": primary_project_name,
+                "project_id": primary_project_id,
+                "charter_id": f"{primary_project_id}:1" if primary_project_id else None,
                 "review_count": len(vals),
                 "metric_score": rounded_avg,
                 "ledger_ref": reviews[0].get("ledger_ref") or "sponsor_review_audit"
@@ -289,6 +303,8 @@ def compute_company_pros_and_cons(sponsor_id: str, conn: sqlite3.Connection) -> 
             "type": "pro",
             "evidence": {
                 "project": "Platform Escrow Records",
+                "project_id": primary_project_id,
+                "charter_id": f"{primary_project_id}:1" if primary_project_id else None,
                 "review_count": len(funded_lockers),
                 "metric_score": 1.0,
                 "ledger_ref": "audit_zero_withdrawals"
@@ -301,6 +317,8 @@ def compute_company_pros_and_cons(sponsor_id: str, conn: sqlite3.Connection) -> 
             "type": "con",
             "evidence": {
                 "project": "Ledger audit trail",
+                "project_id": primary_project_id,
+                "charter_id": f"{primary_project_id}:1" if primary_project_id else None,
                 "review_count": len(withdrawals),
                 "metric_score": 0.0,
                 "ledger_ref": "audit_sponsor_withdrawn"

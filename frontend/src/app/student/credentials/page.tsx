@@ -139,8 +139,14 @@ export default function StudentCredentialsPage() {
                   <p className="mt-1 text-slate-500">
                     Model quantization and test benchmarks delivered on time. Payout released via escrow.
                   </p>
-                  <div className="mt-2 flex items-center gap-2 font-mono text-[10px] text-slate-400">
+                  <div className="mt-2 flex items-center justify-between font-mono text-[10px] text-slate-400">
                     <span>Block Hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                    <Link
+                      href="/charters/proj_past_1"
+                      className="font-sans font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                    >
+                      View Closed Charter →
+                    </Link>
                   </div>
                 </div>
 
@@ -154,8 +160,14 @@ export default function StudentCredentialsPage() {
                   <p className="mt-1 text-slate-500">
                     DSP pipeline normalization completed with zero adverse similarity findings.
                   </p>
-                  <div className="mt-2 flex items-center gap-2 font-mono text-[10px] text-slate-400">
+                  <div className="mt-2 flex items-center justify-between font-mono text-[10px] text-slate-400">
                     <span>Block Hash: c5b0a44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852c921</span>
+                    <Link
+                      href="/charters/proj_past_2"
+                      className="font-sans font-semibold text-teal-600 hover:underline dark:text-teal-400"
+                    >
+                      View Closed Charter →
+                    </Link>
                   </div>
                 </div>
               </CardContent>

@@ -48,7 +48,9 @@ export async function apiFetch<T = any>(
     const errorMsg =
       (typeof data === "object" && (data.detail || data.message)) ||
       `Request failed with status ${res.status}`;
-    throw new Error(errorMsg);
+    const err: any = new Error(errorMsg);
+    err.status = res.status;
+    throw err;
   }
 
   return data as T;

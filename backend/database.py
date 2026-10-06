@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS projects (
     engagement_model TEXT NOT NULL, -- funded, stipend, knowledge-sharing, institutional-credit
     sensitivity_label TEXT DEFAULT 'Confidential', -- Public, Confidential, Strictly Restricted
     status TEXT DEFAULT 'open',     -- draft, open, in_progress, closed, withdrawn
+    final_outcome TEXT DEFAULT NULL, -- Verified deliverable outcome for closed projects
     sponsor_id TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(sponsor_id) REFERENCES users(id)
@@ -271,6 +272,10 @@ def init_db(db_path: str = DB_PATH):
         conn.executescript(SCHEMA_SQL)
         try:
             conn.execute("ALTER TABLE projects ADD COLUMN sensitivity_label TEXT DEFAULT 'Confidential'")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+        try:
+            conn.execute("ALTER TABLE projects ADD COLUMN final_outcome TEXT DEFAULT NULL")
         except sqlite3.OperationalError:
             pass  # column already exists
 
